@@ -1,8 +1,8 @@
 # $Id$
 
 Name: sisyphus_check
-Version: 0.7.9
-Release: alt2
+Version: 0.7.10
+Release: alt1
 
 Summary: package checker for Sisyphus
 License: GPL
@@ -31,6 +31,11 @@ This package contains sisyphus_check utility.
 %_bindir/*
 
 %changelog
+* Fri Nov 19 2004 Dmitry V. Levin <ldv@altlinux.org> 0.7.10-alt1
+- check_content: added few checks for intersections
+  with known packages.
+- fhs: added rule for udev.
+
 * Thu Nov 11 2004 Dmitry V. Levin <ldv@altlinux.org> 0.7.9-alt2
 - Check for file type before rpmquery.
 - New option: --recursive.
