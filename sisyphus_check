@@ -381,7 +381,7 @@ check_fhs()
 	list="$(printf %s "$list" |egrep -v "$pattern")" ||
 		return 0
 
-	if bad="$(printf %s "$list" |egrep -ve '^/(bin|boot|etc|lib(64)?|sbin|usr/(X11R6|bin|etc|games|include|lib(64)?|sbin|share|src)|var/(cache|lib|lock|log|run|spool|www|yp))/.*'"; then
+	if bad="$(printf %s "$list" |egrep -ve '^/(bin|boot|etc|lib(64)?|sbin|usr/(X11R6|bin|etc|games|include|lib(64)?|sbin|share|src)|var/(cache|lib|lock|log|run|spool|www|yp))/.*')"; then
 		FileError "FHS-2.2 violations: $(printf %s "$bad" |tr -s '[:space:]' ' ')" "$f"
 		return 1
 	fi
