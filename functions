@@ -470,7 +470,7 @@ check_changelog()
 			changelogtext="$(LC_ALL=C rpmquery -p --qf '%{CHANGELOGTEXT}\n' "$f")" ||
 				{ rc=1; continue; }
 
-			if ! printf %s "$changelogtext" |sed -e 's/[^[:alpha:]]//g' |grep -qsv '^$'; then
+			if ! printf %s "$changelogtext" |sed -e 's/[^[:alnum:]]//g' |grep -qsv '^$'; then
 				echo "$f: empty changelog" >&2
 				rc=1
 			fi
