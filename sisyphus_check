@@ -92,7 +92,7 @@ check_changelog()
 	local rc=0
 
 	if ! [ "$((current_time+86400))" -ge "$rpm_changelogtime" ] 2>/dev/null; then
-		FileError "wrong CHANGELOGTIME: $(date -d "1970-01-01 UTC $rpm_changelogtime seconds")" "$f"
+		FileError "CHANGELOGTIME in the future: $(date -d "1970-01-01 UTC $rpm_changelogtime seconds")" "$f"
 		rc=1
 	fi
 
@@ -222,7 +222,7 @@ check_buildtime()
 	local f="$1" && shift || return 1
 
 	if ! [ "$current_time" -ge "$rpm_buildtime" ] 2>/dev/null; then
-		FileError "wrong BUILDTIME: $(date -d "1970-01-01 UTC $rpm_buildtime seconds")" "$f"
+		FileError "BUILDTIME in the future: $(date -d "1970-01-01 UTC $rpm_buildtime seconds")" "$f"
 		return 1
 	fi
 	return 0
