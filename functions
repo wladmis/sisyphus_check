@@ -21,7 +21,7 @@ Fatal()
 quiet=
 Message()
 {
-	[ -z "$quiet" ] || return
+	[ -z "$quiet" ] || return 0
 	printf '%s\n' "$*"
 }
 
