@@ -81,6 +81,7 @@ skip_check_gpgname=
 trust_gpg_names='security incominger'
 no_gpgname_packagers='kernel@packages.altlinux.org'
 package_type=
+recurse_subdir=
 
 # check changelog format
 export no_check_changelog=
@@ -489,8 +490,14 @@ check()
 
 	for d in "$@"; do
 		[ -d "$d" ] || { FileError "$d: not a directory"; rc=1; continue; }
-		local f
-		for f in `find "$d" -mindepth 1 -maxdepth 1`; do
+		local filelist f
+		if [ -n "$recurse_subdir" ]; then
+			filelist="$(find "$d" -mindepth 1 -not -type d)" || { rc=1; continue; }
+		else
+			filelist="$(find "$d" -mindepth 1 -maxdepth 1)" || { rc=1; continue; }
+		fi
+		
+		for f in $filelist; do
 			if [ ! -f "$f" ]; then
 				FileError "not a regular file" "$f"
 				rc=1
@@ -709,7 +716,7 @@ EOF
 	[ -n "$1" ] && exit "$1" || exit
 }
 
-TEMP=`getopt -n $PROG -o h,q,v -l help,quiet,verbose,fast-check,show-bad-files,trust-gpg-names:,no-check:,no-check-,$(printf %s "$check_env" |tr _ - |tr -s '[:space:]' ',') -- "$@"` || Usage
+TEMP=`getopt -n $PROG -o h,q,v -l help,quiet,verbose,fast-check,show-bad-files,recursive,trust-gpg-names:,no-check:,no-check-,$(printf %s "$check_env" |tr _ - |tr -s '[:space:]' ',') -- "$@"` || Usage
 eval set -- "$TEMP"
 
 while :; do
@@ -742,6 +749,8 @@ while :; do
 		--fast-check) fast_check=1
 			;;
 		--show-bad-files) show_bad_files=1
+			;;
+		--recursive) recurse_subdir=1
 			;;
 		--trust-gpg-names) shift
 			trust_gpg_names="$1"
