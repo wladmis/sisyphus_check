@@ -388,6 +388,12 @@ check()
 				continue
 			fi
 
+			if ! check_gpg "$f"; then
+				Message "ERROR: you have problems with package signatures"
+				rc=1
+				[ -z "$fast_check" ] || continue
+			fi
+
 			local rpm_arch rpm_buildhost rpm_buildtime
 			local rpm_changelogname rpm_changelogtext
 			local rpm_changelogtime rpm_description
@@ -456,12 +462,6 @@ rpm_version=%{version:shescape};
 
 			rpm_filelist="$(printf %s "$rpm_filelist" |LC_COLLATE=C sort -u)" || Fatal "sort failed."
 			rpm_long_filelist="$(printf %s "$rpm_long_filelist" |LC_COLLATE=C sort -u)" || Fatal "sort failed."
-
-			if ! check_gpg "$f"; then
-				Message "ERROR: you have problems with package signatures"
-				rc=1
-				[ -z "$fast_check" ] || continue
-			fi
 
 			if ! check_buildhost "$f"; then
 				Message "ERROR: you have problems with buildhost name"
@@ -590,7 +590,7 @@ target_cleanup()
 			return
 		fi
 	done
-	Message "$f: new file!"
+	echo "$f: new file!"
 }
 
 cleanup_incoming()
@@ -742,12 +742,12 @@ $n"
 check_incoming()
 {
 	if ! check_missing_srpms "$@"; then
-		Message "ERROR: you have orphaned RPMS"
+		echo "ERROR: you have orphaned RPMS" >&2
 		return 1
 	fi
 
 	if ! check_obsolete_srpms "$@"; then
-		Message "ERROR: you have orphaned SRPMS"
+		echo "ERROR: you have orphaned SRPMS" >&2
 		return 1
 	fi
 	check "$@"
