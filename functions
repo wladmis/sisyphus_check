@@ -59,6 +59,40 @@ check_gpg()
 	return 0
 }
 
+# check for valid buildhost
+export no_check_buildhost=
+check_buildhost()
+{
+	[ -z "$no_check_buildhost" ] || return 0
+	local f="$1" && shift || return 1
+
+	# Do not check build host for source rpms.
+	[ -n "${f%%*src.rpm}" ] || return 0
+
+	if ! printf %s "$rpm_buildhost" |egrep -qs '^[^.]+\.(hasher|sandman)\.altlinux\.org$'; then
+		FileError "wrong BUILDHOST: $rpm_buildhost" "$f"
+		return 1
+	fi
+	return 0
+}
+
+# check for valid buildtime
+export no_check_buildtime=
+check_buildtime()
+{
+	[ -z "$no_check_buildtime" ] || return 0
+	local f="$1" && shift || return 1
+
+	# Do not check build host for source rpms.
+	[ -n "${f%%*src.rpm}" ] || return 0
+
+	if ! [ "$current_allowed_time" -gt "$rpm_buildtime" ]; then
+		FileError "wrong BUILDTIME: $rpm_buildtime" "$f"
+		return 1
+	fi
+	return 0
+}
+
 # check for printable summary, description, etc.
 export no_check_printable=
 check_printable()
@@ -139,23 +173,6 @@ check_group()
 
 	if ! grep -q "^$rpm_group$" /usr/lib/rpm/GROUPS; then
 		FileError "wrong GROUP: $rpm_group" "$f"
-		return 1
-	fi
-	return 0
-}
-
-# check for valid buildhost
-export no_check_buildhost=
-check_buildhost()
-{
-	[ -z "$no_check_buildhost" ] || return 0
-	local f="$1" && shift || return 1
-
-	# Do not check build host for source rpms.
-	[ -n "${f%%*src.rpm}" ] || return 0
-
-	if ! printf %s "$rpm_buildhost" |egrep -qs '^[^.]+\.(hasher|sandman)\.altlinux\.org$'; then
-		FileError "wrong BUILDHOST: $rpm_buildhost" "$f"
 		return 1
 	fi
 	return 0
@@ -335,8 +352,9 @@ check_intersects()
 
 init_check()
 {
-	unset fs_list packager_pattern
+	unset current_allowed_time fs_list packager_pattern
 
+	current_allowed_time="$((`date +%s`+86400))" || return 1
 	fs_list="$(LANG=C LANGUAGE=C LC_ALL=C rpmquery -l filesystem)" || return 1
 	fs_filelist="$(printf %s "$fs_filelist" |LC_COLLATE=C sort -u)" || return 1
 	packager_pattern='<[^@]+(@| at )(packages\.)?altlinux(\.| dot )(com|net|org|ru)>'
@@ -443,8 +461,14 @@ rpm_version=%{version:shescape};
 				[ -z "$fast_check" ] || continue
 			fi
 
-			if ! check_printable "$f"; then
-				Message "ERROR: you have problems with package information"
+			if ! check_buildhost "$f"; then
+				Message "ERROR: you have problems with buildhost name"
+				rc=1
+				[ -z "$fast_check" ] || continue
+			fi
+
+			if ! check_buildtime "$f"; then
+				Message "ERROR: you have problems with buildtime"
 				rc=1
 				[ -z "$fast_check" ] || continue
 			fi
@@ -455,8 +479,8 @@ rpm_version=%{version:shescape};
 				[ -z "$fast_check" ] || continue
 			fi
 
-			if ! check_buildhost "$f"; then
-				Message "ERROR: you have problems with buildhost name"
+			if ! check_printable "$f"; then
+				Message "ERROR: you have problems with package information"
 				rc=1
 				[ -z "$fast_check" ] || continue
 			fi

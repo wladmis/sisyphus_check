@@ -36,7 +36,9 @@ This package contains utilities to ease Sisyphus maintainance.
 
 %changelog
 * Sat Jun 05 2004 Dmitry V. Levin <ldv@altlinux.org> 0.7.0-alt1
-- functions: reimplemented, thanks to legion@.
+- functions: optimized, thanks to legion@.
+- functions/check_buildtime: new check.
+- functions/check: use it.
 - sisyphus_check: added new options:
   quiet, fast-check, show-bad-files.
 
