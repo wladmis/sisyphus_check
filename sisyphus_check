@@ -346,9 +346,10 @@ check_content()
 {
 	[ -z "$no_check_content" ] || return 0
 	local f="$1" && shift || return 1
+	local bad
 
-	if printf %s "$rpm_filelist" |egrep -e '^(/usr(/X11R6)?)?/lib/lib[^/]+\.la$' >&2; then
-		FileError "forbidden .la files" "$f"
+	if bad="$(printf %s "$rpm_filelist" |egrep -e '^(/usr(/X11R6)?)?/lib/lib[^/]+\.la$')"; then
+		FileError "forbidden .la files: $(printf %s "$bad" |tr -s '[:space:]' ' ')" "$f"
 		return 1
 	fi
 
@@ -361,7 +362,7 @@ check_fhs()
 {
 	[ -z "$no_check_fhs" ] || return 0
 	local f="$1" && shift || return 1
-	local list pattern
+	local list pattern bad
 
 	# Do not check filesystem package.
 	[ "$rpm_name" != filesystem ] || return 0
@@ -380,8 +381,8 @@ check_fhs()
 	list="$(printf %s "$list" |egrep -v "$pattern")" ||
 		return 0
 
-	if printf %s "$list" |egrep -vqse '^/(bin|boot|etc|lib(64)?|sbin|usr/(X11R6|bin|etc|games|include|lib(64)?|sbin|share|src)|var/(cache|lib|lock|log|run|spool|www|yp))/.*' >&2; then
-		FileError "FHS-2.2 violations: $(printf %s "$list" |tr -s '[:space:]' ' ')" "$f"
+	if bad="$(printf %s "$list" |egrep -ve '^/(bin|boot|etc|lib(64)?|sbin|usr/(X11R6|bin|etc|games|include|lib(64)?|sbin|share|src)|var/(cache|lib|lock|log|run|spool|www|yp))/.*'"; then
+		FileError "FHS-2.2 violations: $(printf %s "$bad" |tr -s '[:space:]' ' ')" "$f"
 		return 1
 	fi
 	return 0
