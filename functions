@@ -186,6 +186,62 @@ check_nvr()
 	return $rc
 }
 
+# check for valid summary
+export no_check_summary=
+check_summary()
+{
+	[ -z "$no_check_summary" ] || return 0
+	local rc=0
+	local d f t
+
+	for d in "$@"; do
+		[ -d "$d" ] || { echo "not a directory: $d" >&2; rc=1; continue; }
+		for f in "$d"/*.rpm; do
+			if [ ! -f "$f" ]; then
+				[ "$f" != "$d/*.rpm" ] || continue
+				echo "not a regular file: $f" >&2
+				rc=1
+				continue
+			fi
+			t=`LANG=C rpmquery -p --qf='%{SUMMARY}' "$f"` ||
+				{ rc=1; continue; }
+			if ! printf %s "$t" |egrep -qs '[[:alpha:]]'; then
+				echo "$f: empty summary" >&2
+				rc=1
+			fi
+		done
+	done
+	return $rc
+}
+
+# check for valid description
+export no_check_description=
+check_description()
+{
+	[ -z "$no_check_description" ] || return 0
+	local rc=0
+	local d f t
+
+	for d in "$@"; do
+		[ -d "$d" ] || { echo "not a directory: $d" >&2; rc=1; continue; }
+		for f in "$d"/*.rpm; do
+			if [ ! -f "$f" ]; then
+				[ "$f" != "$d/*.rpm" ] || continue
+				echo "not a regular file: $f" >&2
+				rc=1
+				continue
+			fi
+			t=`LANG=C rpmquery -p --qf='%{DESCRIPTION}' "$f"` ||
+				{ rc=1; continue; }
+			if ! printf %s "$t" |egrep -qs '[[:alpha:]]'; then
+				echo "$f: empty description" >&2
+				rc=1
+			fi
+		done
+	done
+	return $rc
+}
+
 # check for valid group
 export no_check_group=
 check_group()
@@ -560,6 +616,16 @@ check()
 
 	if ! check_buildhost "$@"; then
 		echo "ERROR: you have problems with buildhost name"
+		rc=1
+	fi
+
+	if ! check_summary "$@"; then
+		echo "ERROR: you have problems with package summary"
+		rc=1
+	fi
+
+	if ! check_description "$@"; then
+		echo "ERROR: you have problems with package description"
 		rc=1
 	fi
 
