@@ -168,7 +168,13 @@ check_nvr()
 				rc=1
 				continue
 			fi
-			local r
+			local v r
+			v=`LANG=C rpmquery -p --qf='%{VERSION}' "$f"` ||
+				{ rc=1; continue; }
+			if printf %s "$v" |fgrep -qs +; then
+				echo "$f: invalid package version: $v" >&2
+				rc=1
+			fi
 			r=`LANG=C rpmquery -p --qf='%{RELEASE}' "$f"` ||
 				{ rc=1; continue; }
 			if ! printf %s "$r" |egrep -qs '^(alt|ipl)[0-9]'; then
