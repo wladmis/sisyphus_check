@@ -83,7 +83,7 @@ check_buildtime()
 	[ -z "$no_check_buildtime" ] || return 0
 	local f="$1" && shift || return 1
 
-	if ! [ "$current_allowed_time" -gt "$rpm_buildtime" ]; then
+	if ! [ "$current_time" -ge "$rpm_buildtime" ]; then
 		FileError "wrong BUILDTIME: $(date -d '1970-01-01 UTC "$rpm_buildtime" seconds')" "$f"
 		return 1
 	fi
@@ -197,7 +197,7 @@ check_changelog()
 	local f="$1" && shift || return 1
 	local rc=0
 
-	if ! [ "$current_allowed_time" -gt "$rpm_changelogtime" ]; then
+	if ! [ "$((current_time+86400))" -ge "$rpm_changelogtime" ]; then
 		FileError "wrong CHANGELOGTIME: $(date -d '1970-01-01 UTC "$rpm_changelogtime" seconds')" "$f"
 		rc=1
 	fi
@@ -354,9 +354,9 @@ check_intersects()
 
 init_check()
 {
-	unset current_allowed_time fs_list packager_pattern
+	unset current_time fs_list packager_pattern
 
-	current_allowed_time="$((`date +%s`+86400))" || return 1
+	current_time="$(date +%s)" || return 1
 	fs_list="$(LANG=C LANGUAGE=C LC_ALL=C rpmquery -l filesystem)" || return 1
 	fs_filelist="$(printf %s "$fs_filelist" |LC_COLLATE=C sort -u)" || return 1
 	packager_pattern='<[^@]+(@| at )(packages\.)?altlinux(\.| dot )(com|net|org|ru)>'
