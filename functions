@@ -275,16 +275,16 @@ check_perms()
 			fi
 			list="$(LC_ALL=C rpmquery -plv "$f")" ||
 				{ rc=1; continue; }
-			if echo "$list" |egrep -e '^-..s(r|.w|...r|....w)|^-...((r.|.w)s|..s(r|.w))'; then
+			if printf %s "$list" |egrep -e '^-..s(r|.w|...r|....w)|^-...((r.|.w)s|..s(r|.w))'; then
 				echo "$f: bad permissions for suid/sgid files" >&2
 				rc=1
 			fi
-			if echo "$list" |egrep -e '^[^l]....(w|...w)[^/]+/usr/'; then
+			if printf %s "$list" |egrep -e '^[^l]....(w|...w)[^/]+/usr/'; then
 				echo "$f: writable files in /usr/" >&2
 				rc=1
 			fi
 			if [ -z "${f%%*src.rpm}" ]; then
-				if echo "$list" |egrep -e '^-([^r]|.[^w])'; then
+				if printf %s "$list" |egrep -e '^-([^r]|.[^w])'; then
 					echo "$f: bad permissions in source archive" >&2
 					rc=1
 				fi
@@ -322,10 +322,39 @@ check_intersects()
 			list="$(rpmquery -pl "$f")" ||
 				{ rc=1; continue; }
 			local s
-			s="$((echo "$m_list"; echo "$list") |LC_COLLATE=C sort |uniq -c |grep '^ *2' ||:)" ||
+			s="$((printf %s\\n "$m_list"; printf %s\\n "$list") |LC_COLLATE=C sort |uniq -c |grep '^ *2' ||:)" ||
 				{ rc=1; continue; }
 			if [ -n "$s" ]; then
 				echo "$f:" `echo "$s" |cut -f2-`
+				rc=1
+			fi
+		done
+	done
+	return $rc
+}
+
+# check files intersections with filesystem
+export no_check_content=
+check_content()
+{
+	[ -z "$no_check_content" ] || return 0
+	local rc=0
+	local d f
+	local list
+
+	for d in "$@"; do
+		[ -d "$d" ] || { echo "not a directory: $d" >&2; rc=1; continue; }
+		for f in "$d"/*.rpm; do
+			if [ ! -f "$f" ]; then
+				[ "$f" != "$d/*.rpm" ] || continue
+				echo "not a regular file: $f" >&2
+				rc=1
+				continue
+			fi
+			list="$(LC_ALL=C rpmquery -pl "$f")" ||
+				{ rc=1; continue; }
+			if printf %s "$list" |egrep -e '^(/usr(/X11R6)?)?/lib/lib[^/]+\.la$'; then
+				echo "$f: forbidden .la files" >&2
 				rc=1
 			fi
 		done
@@ -519,6 +548,12 @@ check()
 		echo "ERROR: you have package intersections"
 		rc=1
 	fi
+
+	if ! check_content "$@"; then
+		echo "ERROR: you have problems with package content"
+		rc=1
+	fi
+
 	return $rc
 }
 
