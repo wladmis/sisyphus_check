@@ -357,7 +357,7 @@ check_intersects()
 	# Do not check filesystem package.
 	[ "$rpm_name" != filesystem ] || return 0
 
-	if ! text="$(printf %s "$rpm_filelist" |LC_COLLATE=C comm -12 -- "$fs_list" -)"; then
+	if ! text="$(printf %s\\n "$rpm_filelist" |LC_COLLATE=C comm -12 -- "$fs_list" -)"; then
 		FileError "comm failed" "$f"
 		rc=1
 	fi
@@ -387,9 +387,9 @@ init_check()
 	trap exit_handler HUP PIPE INT QUIT TERM EXIT
 	fs_list="$(mktemp -t "$PROG.XXXXXXXXXX")"
 
-	fs_filelist="$(LC_ALL=C rpmquery -l filesystem)" || return 1
-	printf %s "$fs_filelist" |LC_COLLATE=C sort -u >"$fs_list"
-	current_time="$(date +%s)"
+	fs_filelist="$(LC_ALL=C rpmquery -l filesystem)" || Fatal "rpmquery filesystem failed."
+	printf %s "$fs_filelist" |LC_COLLATE=C sort -u >"$fs_list" || Fatal "sort failed."
+	current_time="$(date +%s)" || Fatal "date failed."
 	packager_pattern='<[^@]+(@| at )(packages\.)?altlinux(\.| dot )(com|net|org|ru)>'
 }
 
