@@ -2,7 +2,8 @@
 #
 # $Id$
 # Copyright (C) 2003, 2004  Stanislav Ievlev <inger@altlinux.org>,
-#                           Dmitry V. Levin <ldv@altlinux.org>
+#                           Dmitry V. Levin <ldv@altlinux.org>,
+#                           Alexey Gladkov <legion@altlinux.org>
 # 
 # The sisyphus_check utility.
 #
@@ -166,17 +167,21 @@ check_gpgname()
 	local f="$1" && shift || return 1
 	local chlogname sed_gpg_name gpg_name
     
-	chlogname="$(printf %s "$rpm_changelogname" |sed -ne 's/^.*<\([^@]\+\)\(@\| at \).*$/\1/p')"
+	chlogname="$(printf %s "$rpm_changelogname" |
+		sed -ne 's/^.*<\([^@]\+\)\(@\| at \).*$/\1/p' |
+		tr '[:upper:]' '[:lower:]')"
 	sed_gpg_name='s/^.*[[:space:]]\(from\|aka\)[^<]\+<\([^@>]\+\)@altlinux\.\(ru\|com\|net\|org\)>.*$/\2/p'
 
-	for sign in $(printf %s "$rpm_signature" |sed -ne "$sed_gpg_name" |sort -u); do
+	for sign in $(printf %s "$rpm_signature" |sed -ne "$sed_gpg_name" |tr '[:upper:]' '[:lower:]' |sort -u); do
 		for gpg_name in $trust_gpg_names; do
 		    [ "$sign" != "$gpg_name" ] || return 0
 		done
 		[ "$sign" != "$chlogname" ] || return 0
 	done
 
-	chlogname="$(printf %s "$rpm_changelogname" |sed -ne 's/^[^<]*<\([^@]\+\(@\| at \)[^>]\+\)>.*/\1/p' |tr -s '[:space:]' ' ')"
+	chlogname="$(printf %s "$rpm_changelogname" |
+		sed -ne 's/^[^<]*<\([^@]\+\(@\| at \)[^>]\+\)>.*/\1/p' |
+		tr -s '[:space:]' ' ')"
 	FileError "changelog name $chlogname not found in signature" "$f"
 	return 1
 }
@@ -375,7 +380,7 @@ check_fhs()
 	list="$(printf %s "$list" |egrep -v "$pattern")" ||
 		return 0
 
-	if printf %s "$list" |egrep -vqse '^/(bin|boot|etc|lib|sbin|usr/(X11R6|bin|etc|games|include|lib|sbin|share|src)|var/(cache|lib|lock|log|run|spool|www|yp))/.*' >&2; then
+	if printf %s "$list" |egrep -vqse '^/(bin|boot|etc|lib(64)?|sbin|usr/(X11R6|bin|etc|games|include|lib(64)?|sbin|share|src)|var/(cache|lib|lock|log|run|spool|www|yp))/.*' >&2; then
 		FileError "FHS-2.2 violations: $(printf %s "$list" |tr -s '[:space:]' ' ')" "$f"
 		return 1
 	fi
