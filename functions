@@ -451,7 +451,7 @@ check_changelog()
 				{ rc=1; continue; }
 
 			local c_found
-			c_found=`echo "$changelogname" |sed -ne '/^(none)$/q;s/[^<]\+<[^>]\+> *\(.\+\)$/\1/pg'` ||
+			c_found=`printf %s "$changelogname" |sed -ne '/^(none)$/q;s/[^<]\+<[^>]\+> *\(.\+\)$/\1/pg'` ||
 				{ rc=1; continue; }
 			local c_expected
 			c_expected=`LC_ALL=C rpmquery -p --qf '%|SERIAL?{%{SERIAL}:}|%{VERSION}-%{RELEASE}\n' "$f"` ||
@@ -461,8 +461,20 @@ check_changelog()
 				rc=1
 			fi
 
-			if ! echo "$changelogname" |egrep -qs "$packager_pattern"; then
+			if ! printf %s "$changelogname" |egrep -qs "$packager_pattern"; then
 				echo "$f: wrong packager in changelog: $changelogname" >&2
+				rc=1
+			fi
+
+			local changelogtext
+			changelogtext="$(LC_ALL=C rpmquery -p --qf '%{CHANGELOGTEXT}\n' "$f")" ||
+				{ rc=1; continue; }
+
+			local c_text
+			c_text=`printf %s "$changelogtext" |sed -e 's/[^[:alpha:]]//g' |grep -v '^$'` ||
+				{ rc=1; continue; }
+			if [ -z "$c_text" ]; then
+				echo "$f: empty changelog" >&2
 				rc=1
 			fi
 		done
