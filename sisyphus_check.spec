@@ -1,7 +1,7 @@
 # $Id$
 
 Name: sisyphus
-Version: 0.5.2
+Version: 0.5.3
 Release: alt1
 
 Summary: Helpers for Sisyphus
@@ -35,6 +35,11 @@ This package contains utilities to ease Sisyphus maintainance.
 %_bindir/*
 
 %changelog
+* Sun Nov 02 2003 Dmitry V. Levin <ldv@altlinux.org> 0.5.3-alt1
+- sisyphus_check:
+  + new option: --no-check=LIST;
+  + better error diagnostics.
+
 * Tue Oct 28 2003 Dmitry V. Levin <ldv@altlinux.org> 0.5.2-alt1
 - sisyphus/fhs: new file.
 - functions: use it.
