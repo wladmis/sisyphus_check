@@ -1,13 +1,15 @@
 # $Id$
 
 Name: sisyphus_check
-Version: 0.7.2
+Version: 0.7.3
 Release: alt1
 
 Summary: package checker for Sisyphus
 License: GPL
 Group: Development/Other
 BuildArch: noarch
+
+Requires: mktemp >= 1:1.3.1
 Conflicts: sisyphus < 0.7.2
 
 # get the source from our cvs repository
@@ -29,6 +31,9 @@ This package contains sisyphus_check utility.
 %_bindir/*
 
 %changelog
+* Wed Jul 07 2004 Dmitry V. Levin <ldv@altlinux.org> 0.7.3-alt1
+- check_fhs,check_intersects: do not use command substitutions.
+
 * Thu Jun 24 2004 Dmitry V. Levin <ldv@altlinux.org> 0.7.2-alt1
 - Moved sisyphus_check to separate subpackage.
 
