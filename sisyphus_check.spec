@@ -1,7 +1,7 @@
 # $Id$
 
 Name: sisyphus
-Version: 0.5.4
+Version: 0.5.5
 Release: alt1
 
 Summary: Helpers for Sisyphus
@@ -35,6 +35,14 @@ This package contains utilities to ease Sisyphus maintainance.
 %_bindir/*
 
 %changelog
+* Mon Feb 09 2004 Dmitry V. Levin <ldv@altlinux.org> 0.5.5-alt1
+- functions/check_deps:
+  + added initscripts to the list of forbidden dependencies.
+- functions/check_nvr:
+  + new check (for invalid name-version-release).
+- functions/check:
+  + use it.
+
 * Wed Nov 26 2003 Dmitry V. Levin <ldv@altlinux.org> 0.5.4-alt1
 - functions/check_content: new check (forbidden .la files).
 - config:

@@ -151,6 +151,35 @@ check_printable()
 	return $rc
 }
 
+# check for valid nvr
+export no_check_nvr=
+check_nvr()
+{
+	[ -z "$no_check_nvr" ] || return 0
+	local rc=0
+	local d f
+
+	for d in "$@"; do
+		[ -d "$d" ] || { echo "not a directory: $d" >&2; rc=1; continue; }
+		for f in "$d"/*.rpm; do
+			if [ ! -f "$f" ]; then
+				[ "$f" != "$d/*.rpm" ] || continue
+				echo "not a regular file: $f" >&2
+				rc=1
+				continue
+			fi
+			local r
+			r=`LANG=C rpmquery -p --qf='%{RELEASE}' "$f"` ||
+				{ rc=1; continue; }
+			if ! printf %s "$r" |egrep -qs '^(alt|ipl)[0-9]'; then
+				echo "$f: invalid package release: $r" >&2
+				rc=1
+			fi
+		done
+	done
+	return $rc
+}
+
 # check for valid group
 export no_check_group=
 check_group()
@@ -462,7 +491,7 @@ check_deps()
 			fi
 			dep="$(LANG=C rpmquery -pR "$f")" ||
 				{ rc=1; continue; }
-			bad="$(echo -E "$dep" |egrep '^(fileutils|sh-utils|textutils|/etc/rc\.d/init\.d\((daemon|killproc|pidof)\)|pam_stack\.so)[[:space:]]*$')" || continue
+			bad="$(echo -E "$dep" |egrep '^(fileutils|initscripts|sh-utils|textutils|/etc/rc\.d/init\.d\((daemon|killproc|pidof)\)|pam_stack\.so)[[:space:]]*$')" || continue
 			if [ -n "$bad" ]; then
 				echo "$f: forbidden requires: $(echo "$bad" |xargs echo)" >&2
 				rc=1
@@ -521,6 +550,11 @@ check()
 
 	if ! check_group "$@"; then
 		echo "ERROR: you have problems with package group"
+		rc=1
+	fi
+
+	if ! check_nvr "$@"; then
+		echo "ERROR: you have problems with package name-version-release format"
 		rc=1
 	fi
 
