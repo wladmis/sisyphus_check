@@ -1,7 +1,7 @@
 # $Id$
 
 Name: sisyphus_check
-Version: 0.7.10
+Version: 0.7.11
 Release: alt1
 
 Summary: package checker for Sisyphus
@@ -31,6 +31,10 @@ This package contains sisyphus_check utility.
 %_bindir/*
 
 %changelog
+* Wed Dec 29 2004 Dmitry V. Levin <ldv@altlinux.org> 0.7.11-alt1
+- check_fhs: allow /usr/libexec/.
+- check_changelog, check_buildtime: enhanced wording.
+
 * Fri Nov 19 2004 Dmitry V. Levin <ldv@altlinux.org> 0.7.10-alt1
 - check_content: added few checks for intersections
   with known packages.
