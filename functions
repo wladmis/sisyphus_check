@@ -197,37 +197,37 @@ check_changelog()
 	local f="$1" && shift || return 1
 	local rc=0
 
-	# Do not check changelog for binary rpms.
-	[ -z "${f%%*src.rpm}" ] || return 0
-
-	local c_found
-	if ! c_found=`printf %s "$rpm_changelogname" |sed -ne '/^(none)$/q;s/[^<]\+<[^>]\+> *\(.\+\)$/\1/pg'`; then
-		FileError "sed failed" "$f"
-		rc=1
-	fi
-
-	local c_expected
-	[ -z "$rpm_serial" ] && c_expected= || c_expected="$rpm_serial:"
-	c_expected="$c_expected$rpm_version-$rpm_release"
-
-	if [ "$c_expected" != "$c_found" ]; then
-		FileError "wrong CHANGELOG: expected \"$c_expected\", found \"$c_found\"" "$f"
-		rc=1
-	fi
-
-	if ! printf %s "$rpm_changelogname" |egrep -qs "$packager_pattern"; then
-		FileError "wrong packager in CHANGELOG: $rpm_changelogname" "$f"
+	if ! [ "$current_allowed_time" -gt "$rpm_changelogtime" ]; then
+		FileError "wrong CHANGELOGTIME: $(date -d '1970-01-01 UTC "$rpm_changelogtime" seconds')" "$f"
 		rc=1
 	fi
 
 	if ! printf %s "$rpm_changelogtext" |sed -e 's/[^[:alnum:]]//g' |grep -qsv '^$'; then
-		FileError "invalid CHANGELOG: $(printf %s "$rpm_changelogtext" |tr '\n' ' ')" "$f"
+		FileError "invalid CHANGELOGTEXT: $(printf %s "$rpm_changelogtext" |tr '\n' ' ')" "$f"
 		rc=1
 	fi
 
-	if ! [ "$current_allowed_time" -gt "$rpm_changelogtime" ]; then
-		FileError "wrong CHANGELOGTIME: $(date -d '1970-01-01 UTC "$rpm_changelogtime" seconds')" "$f"
-		rc=1
+	# Do not check changelog name for binary rpms.
+	if [ -z "${f%%*src.rpm}" ]; then
+		local c_found
+		if ! c_found=`printf %s "$rpm_changelogname" |sed -ne '/^(none)$/q;s/[^<]\+<[^>]\+> *\(.\+\)$/\1/pg'`; then
+			FileError "sed failed" "$f"
+			rc=1
+		fi
+
+		local c_expected
+		[ -z "$rpm_serial" ] && c_expected= || c_expected="$rpm_serial:"
+		c_expected="$c_expected$rpm_version-$rpm_release"
+
+		if [ "$c_expected" != "$c_found" ]; then
+			FileError "wrong CHANGELOGNAME: expected \"$c_expected\", found \"$c_found\"" "$f"
+			rc=1
+		fi
+
+		if ! printf %s "$rpm_changelogname" |egrep -qs "$packager_pattern"; then
+			FileError "wrong packager in CHANGELOGNAME: $rpm_changelogname" "$f"
+			rc=1
+		fi
 	fi
 
 	return $rc
