@@ -1,7 +1,7 @@
 # $Id$
 
 Name: sisyphus_check
-Version: 0.7.5
+Version: 0.7.6
 Release: alt1
 
 Summary: package checker for Sisyphus
@@ -31,6 +31,10 @@ This package contains sisyphus_check utility.
 %_bindir/*
 
 %changelog
+* Tue Aug 31 2004 Dmitry V. Levin <ldv@altlinux.org> 0.7.6-alt1
+- check_gpgname: made the check case-insensitive.
+- check_fhs: added /lib64 and /usr/lib64 to builtin list.
+
 * Fri Aug 13 2004 Dmitry V. Levin <ldv@altlinux.org> 0.7.5-alt1
 - New option: --trust-gpg-names.
 
