@@ -1,7 +1,7 @@
 # $Id$
 
 Name: sisyphus_check
-Version: 0.7.3
+Version: 0.7.4
 Release: alt1
 
 Summary: package checker for Sisyphus
@@ -31,6 +31,9 @@ This package contains sisyphus_check utility.
 %_bindir/*
 
 %changelog
+* Tue Aug 10 2004 Dmitry V. Levin <ldv@altlinux.org> 0.7.4-alt1
+- check_gpgname: new check.
+
 * Wed Jul 07 2004 Dmitry V. Levin <ldv@altlinux.org> 0.7.3-alt1
 - check_fhs,check_intersects: do not use command substitutions.
 - Enhanced error diagnostics a bit.

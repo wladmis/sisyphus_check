@@ -75,25 +75,106 @@ FileError()
 	printf %s\\n "$(printf %s "$text" |tr '[:cntrl:]' ' ')" >&2
 }
 
+rpm_signature=
+skip_check_gpgname=
+
+# check changelog format
+export no_check_changelog=
+check_changelog()
+{
+	[ -z "$no_check_changelog" ] || return 0
+	local f="$1" && shift || return 1
+	local rc=0
+
+	if ! [ "$((current_time+86400))" -ge "$rpm_changelogtime" ] 2>/dev/null; then
+		FileError "wrong CHANGELOGTIME: $(date -d "1970-01-01 UTC $rpm_changelogtime seconds")" "$f"
+		rc=1
+	fi
+
+	if ! printf %s "$rpm_changelogtext" |sed -e 's/[^[:alnum:]]//g' |grep -qsv '^$'; then
+		FileError "invalid CHANGELOGTEXT: $(printf %s "$rpm_changelogtext" |tr -s '[:space:]' ' ')" "$f"
+		rc=1
+	fi
+
+	if ! printf %s "$rpm_changelogname" |egrep -qs "$packager_pattern"; then
+		FileError "wrong packager in CHANGELOGNAME: $rpm_changelogname" "$f"
+		rc=1
+	fi
+
+	# Do not check changelog name for binary rpms.
+	if [ -z "${f%%*src.rpm}" ]; then
+		local c_found
+		if ! c_found=`printf %s "$rpm_changelogname" |sed -ne '/^(none)$/q;s/[^<]\+<[^>]\+> *\(.\+\)$/\1/pg'`; then
+			FileError "sed failed" "$f"
+			rc=1
+		fi
+
+		local c_expected
+		[ -z "$rpm_serial" ] && c_expected= || c_expected="$rpm_serial:"
+		c_expected="$c_expected$rpm_version-$rpm_release"
+
+		if [ "$c_expected" != "$c_found" ]; then
+			FileError "wrong CHANGELOGNAME: expected \"$c_expected\", found \"$c_found\"" "$f"
+			rc=1
+		fi
+	fi
+
+	return $rc
+}
+
 # check package signature
 export no_check_gpg=
 check_gpg()
 {
 	[ -z "$no_check_gpg" ] || return 0
 	local f="$1" && shift || return 1
-	local text
+	local bads=
 
-	if ! text="$(LC_ALL=C GNUPGHOME=/usr/lib/alt-gpgkeys rpmsign -K "$f")"; then
+	if [ -z "$rpm_siggpg" ]; then 
+		FileError "signature not found" "$f"
+		return 1
+	fi
+
+	if ! rpm_signature="$(LC_ALL=C GNUPGHOME=/usr/lib/alt-gpgkeys rpmsign -Kv "$f")"; then
 		FileError "rpmsign failed" "$f"
 		return 1
 	fi
-	if text="$(printf %s "$text" |grep -v ': md5 gpg OK$')"; then
-		text="$(printf %s "$text" |tr -s '[:space:]' ' ')"
-		text="${text#$f: }"
-		FileError "bad SIGNATURE: $(printf %s "$text" |tr -s '[:space:]' ' ')" "$f"
+
+	if ! printf %s "$rpm_signature" |grep -qs '^MD5 sum OK: '; then
+		bads=" md5"
+	fi
+
+	if ! printf %s "$rpm_signature" |grep -qs '^gpg: Good signature '; then
+		bads=" gnupg"
+	fi
+
+	if [ -n "$bads" ]; then
+		FileError "bad SIGNATURE:$bads NOT ok" "$f"
 		return 1
 	fi
+
 	return 0
+}
+
+# check package changelogname and signature
+export no_check_gpgname=
+check_gpgname()
+{
+	[ -z "$no_check_gpg" -a -z "$no_check_gpgname" -a -z "$skip_check_gpgname" ] || return 0
+
+	local f="$1" && shift || return 1
+	local chlogname sed_gpg_name
+    
+	chlogname="$(printf %s "$rpm_changelogname" |sed -ne 's/^.*<\([^@]\+\)\(@\| at \).*$/\1/p')"
+	sed_gpg_name='s/^.*[[:space:]]\(from\|aka\)[^<]\+<\([^@>]\+\)@altlinux\.\(ru\|com\|net\|org\)>.*$/\2/p'
+
+	for sign in $(printf %s "$rpm_signature" |sed -ne "$sed_gpg_name" |sort -u); do
+		[ "$sign" != "security" ] || return 0
+		[ "$sign" != "$chlogname" ] || return 0
+	done
+
+	FileError "signature/changelog mismatch" "$f"
+	return 1
 }
 
 # check for valid buildhost
@@ -224,50 +305,6 @@ check_packager()
 		return 1
 	fi
 	return 0
-}
-
-# check changelog format
-export no_check_changelog=
-check_changelog()
-{
-	[ -z "$no_check_changelog" ] || return 0
-	local f="$1" && shift || return 1
-	local rc=0
-
-	if ! [ "$((current_time+86400))" -ge "$rpm_changelogtime" ] 2>/dev/null; then
-		FileError "wrong CHANGELOGTIME: $(date -d "1970-01-01 UTC $rpm_changelogtime seconds")" "$f"
-		rc=1
-	fi
-
-	if ! printf %s "$rpm_changelogtext" |sed -e 's/[^[:alnum:]]//g' |grep -qsv '^$'; then
-		FileError "invalid CHANGELOGTEXT: $(printf %s "$rpm_changelogtext" |tr -s '[:space:]' ' ')" "$f"
-		rc=1
-	fi
-
-	# Do not check changelog name for binary rpms.
-	if [ -z "${f%%*src.rpm}" ]; then
-		local c_found
-		if ! c_found=`printf %s "$rpm_changelogname" |sed -ne '/^(none)$/q;s/[^<]\+<[^>]\+> *\(.\+\)$/\1/pg'`; then
-			FileError "sed failed" "$f"
-			rc=1
-		fi
-
-		local c_expected
-		[ -z "$rpm_serial" ] && c_expected= || c_expected="$rpm_serial:"
-		c_expected="$c_expected$rpm_version-$rpm_release"
-
-		if [ "$c_expected" != "$c_found" ]; then
-			FileError "wrong CHANGELOGNAME: expected \"$c_expected\", found \"$c_found\"" "$f"
-			rc=1
-		fi
-
-		if ! printf %s "$rpm_changelogname" |egrep -qs "$packager_pattern"; then
-			FileError "wrong packager in CHANGELOGNAME: $rpm_changelogname" "$f"
-			rc=1
-		fi
-	fi
-
-	return $rc
 }
 
 # check for inacceptable dependencies
@@ -441,12 +478,6 @@ check()
 				continue
 			fi
 
-			if ! check_gpg "$f"; then
-				Message "ERROR: you have problems with package signatures"
-				rc=1
-				[ -z "$fast_check" ] || continue
-			fi
-
 			local rpm_arch rpm_buildhost rpm_buildtime
 			local rpm_changelogname rpm_changelogtext
 			local rpm_changelogtime rpm_description
@@ -475,6 +506,7 @@ rpm_packager=%{packager:shescape};
 rpm_platform=%{platform:shescape};
 rpm_release=%{release:shescape};
 rpm_serial=%|serial?{%{serial:shescape}}|;
+rpm_siggpg=\"%|siggpg?{%{siggpg}}|\";
 rpm_size=%{size:shescape};
 rpm_sourcerpm=%{sourcerpm:shescape};
 rpm_summary=%{summary:shescape};
@@ -488,6 +520,25 @@ rpm_version=%{version:shescape};
 			fi
 			eval "$values"
 			unset values
+
+			if ! check_changelog "$f"; then
+				Message "ERROR: you have problems with changelog format"
+				rc=1
+				[ -z "$fast_check" ] || continue
+			fi
+
+			if ! check_gpg "$f"; then
+				Message "ERROR: you have problems with package signatures"
+				skip_check_gpgname=1
+				rc=1
+				[ -z "$fast_check" ] || continue
+			fi
+
+			if ! check_gpgname "$f"; then
+				Message "ERROR: you have problems with changelog and signature name"
+				rc=1
+				[ -z "$fast_check" ] || continue
+			fi
 
 			if ! rpm_deps="$(LC_ALL=C rpmquery -p --requires --provides --obsoletes --conflicts "$f")"; then
 				FileError "rpmquery failed" "$f"
@@ -564,11 +615,6 @@ rpm_version=%{version:shescape};
 				[ -z "$fast_check" ] || continue
 			fi
 
-			if ! check_changelog "$f"; then
-				Message "ERROR: you have problems with changelog format"
-				rc=1
-				[ -z "$fast_check" ] || continue
-			fi
 
 			if ! check_deps "$f"; then
 				Message "ERROR: you have problems with package dependencies"
@@ -607,7 +653,7 @@ rpm_version=%{version:shescape};
 	return $rc
 }
 
-check_env="$(printenv |sed -ne 's/^\(no_check_[a-z]\+\)=.*/\1/pg')"
+check_env="$(printenv |sed -ne 's/^\(no_check_[a-z]\+\)=.*/\1/pg' |sort -u)"
 
 Usage()
 {
