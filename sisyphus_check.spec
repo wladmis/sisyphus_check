@@ -1,7 +1,7 @@
 # $Id$
 
 Name: sisyphus
-Version: 0.5.6
+Version: 0.6.0
 Release: alt1
 
 Summary: Helpers for Sisyphus
@@ -35,6 +35,11 @@ This package contains utilities to ease Sisyphus maintainance.
 %_bindir/*
 
 %changelog
+* Thu May 13 2004 Dmitry V. Levin <ldv@altlinux.org> 0.6.0-alt1
+- sisyphus_relink: added support for new style lists.
+- functions/{check_summary,check_description}: new checks.
+- functions/check: use them.
+
 * Thu Feb 19 2004 Dmitry V. Levin <ldv@altlinux.org> 0.5.6-alt1
 - functions/check_changelog: added check for empty changelog text.
 
