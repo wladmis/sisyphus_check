@@ -1,7 +1,7 @@
 # $Id$
 
 Name: sisyphus_check
-Version: 0.7.8
+Version: 0.7.9
 Release: alt1
 
 Summary: package checker for Sisyphus
@@ -31,6 +31,10 @@ This package contains sisyphus_check utility.
 %_bindir/*
 
 %changelog
+* Thu Nov 11 2004 Dmitry V. Levin <ldv@altlinux.org> 0.7.9-alt1
+- Check for file type before rpmquery.
+- New option: --recursive.
+
 * Fri Oct 22 2004 Dmitry V. Levin <ldv@altlinux.org> 0.7.8-alt1
 - Implemented support for check_gpgname() exceptions (legion).
 
