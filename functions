@@ -110,7 +110,7 @@ check_summary()
 	local f="$1" && shift || return 1
 
 	if ! printf %s "$rpm_summary" |egrep -qs '[[:alpha:]]'; then
-		FileError "invalid SUMMARY" "$f"
+		FileError "invalid SUMMARY: $rpm_summary" "$f"
 		return 1
 	fi
 	return 0
@@ -273,8 +273,8 @@ check_fhs()
 			printf '%s\n' "$v"
 		done |LC_COLLATE=C sort -u)" || return 1
 
-	list="$(printf %s "$list" |egrep -vf <(printf %s "$pattern") )" || return 1
-			
+	list="$(printf %s "$list" |egrep -vf <(printf %s "$pattern") )" || return 0
+
 	if printf %s "$list" |egrep -ve '^/(bin|boot|etc|lib|sbin|usr/(X11R6|bin|etc|games|include|lib|sbin|share|src)|var/(cache|lib|lock|log|run|spool|www|yp))/.*' >&2; then
 		FileError "FHS-2.2 violations" "$f"
 		return 1
