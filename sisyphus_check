@@ -21,6 +21,7 @@ Usage: $PROG [options] <directory>...
 Valid options are:
   --quiet
   --verbose
+  --fast-check
   --show-bad-files
   --no-check=LIST
 EOF
