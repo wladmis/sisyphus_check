@@ -80,6 +80,7 @@ rpm_signature=
 skip_check_gpgname=
 trust_gpg_names='security incominger'
 no_gpgname_packagers='kernel@packages.altlinux.org'
+package_type=
 
 # check changelog format
 export no_check_changelog=
@@ -105,7 +106,7 @@ check_changelog()
 	fi
 
 	# Do not check changelog name for binary rpms.
-	if [ -z "${f%%*src.rpm}" ]; then
+	if [ "$package_type" = src ]; then
 		local c_found
 		if ! c_found=`printf %s "$rpm_changelogname" |sed -ne '/^(none)$/q;s/[^<]\+<[^>]\+> *\(.\+\)$/\1/pg'`; then
 			FileError "sed failed" "$f"
@@ -203,7 +204,7 @@ check_buildhost()
 	local f="$1" && shift || return 1
 
 	# Do not check build host for source rpms.
-	[ -n "${f%%*src.rpm}" ] || return 0
+	[ "$package_type" != src ] || return 0
 
 	if ! printf %s "$rpm_buildhost" |egrep -qs '^[^.]+\.(hasher|sandman)\.altlinux\.org$'; then
 		FileError "wrong BUILDHOST: $rpm_buildhost" "$f"
@@ -413,7 +414,7 @@ check_perms()
 		FileError "writable files in /usr/" "$f"
 		rc=1
 	fi
-	if [ -z "${f%%*src.rpm}" ]; then
+	if [ "$package_type" = src ]; then
 		if printf %s "$rpm_long_filelist" |egrep -e '^-([^r]|.[^w])' >&2; then
 			FileError "bad permissions in source archive" "$f"
 			rc=1
@@ -489,10 +490,20 @@ check()
 	for d in "$@"; do
 		[ -d "$d" ] || { FileError "$d: not a directory"; rc=1; continue; }
 		local f
-		for f in "$d"/*.rpm; do
+		for f in `find "$d" -mindepth 1 -maxdepth 1`; do
 			if [ ! -f "$f" ]; then
-				[ "$f" != "$d/*.rpm" ] || continue
 				FileError "not a regular file" "$f"
+				rc=1
+				continue
+			fi
+
+			package_type="$(file -b -- "$f")" || { rc=1; continue; }
+			if [ -z "${package_type##RPM v? src *}" ]; then
+				package_type=src
+			elif [ -z "${package_type##RPM v? bin *}" ]; then
+				package_type=bin
+			else
+				FileError "unexpected file type: $(printf %s "$package_type" |tr -s '[:space:]' ' ')" "$f"
 				rc=1
 				continue
 			fi
