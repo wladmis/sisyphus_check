@@ -238,7 +238,7 @@ check_fhs()
 
 			pattern="$(grep '^[^#]' /etc/sisyphus/fhs |
 			while read -r n v; do
-				[ -z "${name##$n}" ] || continue
+				[ -n "$n" -a -n "$v" -a -z "${name##$n}" ] || continue
 				printf '%s\n' "$v"
 			done)" ||
 				{ rc=1; continue; }
