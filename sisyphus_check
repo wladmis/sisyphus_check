@@ -219,7 +219,7 @@ check_buildtime()
 	[ -z "$no_check_buildtime" ] || return 0
 	local f="$1" && shift || return 1
 
-	if ! [ "$current_time" -ge "$rpm_buildtime" ]; then
+	if ! [ "$current_time" -ge "$rpm_buildtime" ] 2>/dev/null; then
 		FileError "wrong BUILDTIME: $(date -d "1970-01-01 UTC $rpm_buildtime seconds")" "$f"
 		return 1
 	fi
