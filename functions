@@ -337,7 +337,7 @@ init_check()
 {
 	unset fs_list packager_pattern
 
-	fs_list="$(rpmquery -l filesystem)" || return 1
+	fs_list="$(LANG=C LANGUAGE=C LC_ALL=C rpmquery -l filesystem)" || return 1
 	fs_filelist="$(printf %s "$fs_filelist" |LC_COLLATE=C sort -u)" || return 1
 	packager_pattern='<[^@]+(@| at )(packages\.)?altlinux(\.| dot )(com|net|org|ru)>'
 }
@@ -650,7 +650,7 @@ check_missing_srpms()
 			rc=1
 			continue
 		fi
-		n=`rpmquery -p --qf '%{SOURCERPM}' -- "$f"` ||
+		n=`LANG=C LANGUAGE=C LC_ALL=C rpmquery -p --qf '%{SOURCERPM}' -- "$f"` ||
 			{ rc=1; continue; }
 		n="${n%.src.rpm}"
 		n="${n%.nosrc.rpm}"
@@ -683,7 +683,7 @@ check_obsolete_srpms()
 			rc=1
 			continue
 		fi
-		n=`rpmquery -p --qf '%{SOURCERPM}' -- "$f"` ||
+		n=`LANG=C LANGUAGE=C LC_ALL=C rpmquery -p --qf '%{SOURCERPM}' -- "$f"` ||
 			{ rc=1; continue; }
 		n="${n%.src.rpm}"
 		n="${n%.nosrc.rpm}"
