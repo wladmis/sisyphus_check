@@ -83,11 +83,8 @@ check_buildtime()
 	[ -z "$no_check_buildtime" ] || return 0
 	local f="$1" && shift || return 1
 
-	# Do not check build host for source rpms.
-	[ -n "${f%%*src.rpm}" ] || return 0
-
 	if ! [ "$current_allowed_time" -gt "$rpm_buildtime" ]; then
-		FileError "wrong BUILDTIME: $rpm_buildtime" "$f"
+		FileError "wrong BUILDTIME: $(date -d '1970-01-01 UTC "$rpm_buildtime" seconds')" "$f"
 		return 1
 	fi
 	return 0
@@ -225,6 +222,11 @@ check_changelog()
 
 	if ! printf %s "$rpm_changelogtext" |sed -e 's/[^[:alnum:]]//g' |grep -qsv '^$'; then
 		FileError "invalid CHANGELOG: $(printf %s "$rpm_changelogtext" |tr '\n' ' ')" "$f"
+		rc=1
+	fi
+
+	if ! [ "$current_allowed_time" -gt "$rpm_changelogtime" ]; then
+		FileError "wrong CHANGELOGTIME: $(date -d '1970-01-01 UTC "$rpm_changelogtime" seconds')" "$f"
 		rc=1
 	fi
 
