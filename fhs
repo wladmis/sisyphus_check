@@ -1,3 +1,5 @@
+# $Id$
+
 # pkgname_pattern	pathname_regexp
 Firebird[CS]S		^/opt/interbase($|/)
 MAKEDEV			^/dev/MAKEDEV$
