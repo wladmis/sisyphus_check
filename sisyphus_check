@@ -64,11 +64,11 @@ check_gpg()
 	local text
 
 	if ! text="$(LC_ALL=C GNUPGHOME=/usr/lib/alt-gpgkeys rpmsign -K "$f")"; then
-		FileError "$text" "$f"
+		FileError "rpmsign failed" "$f"
 		return 1
 	fi
 	if text="$(printf %s "$text" |grep -v ': md5 gpg OK$')"; then
-		FileError "$text" "$f"
+		FileError "bad SIGNATURE: $(printf %s "$text" |tr -s '[:space:]' ' ')" "$f"
 		return 1
 	fi
 	return 0
@@ -116,7 +116,7 @@ check_printable()
 	text="$rpm_name $rpm_version $rpm_release $rpm_group $rpm_packager $rpm_license $rpm_summary $rpm_description"
 
 	if [ -n "$(printf %s "$text" |LC_ALL=C tr -d '[:print:][:space:]')" ]; then
-		FileError "unprintable package information" "$f"
+		FileError "unprintable package information: $(printf %s "$text" |LC_ALL=C tr -d '[:print:][:space:]')" "$f"
 		return 1
 	fi
 	return 0
@@ -170,7 +170,7 @@ check_description()
 	local f="$1" && shift || return 1
 
 	if ! printf %s "$rpm_description" |egrep -qs '[[:alpha:]]'; then
-		FileError "invalid DESCRIPTION: $(printf %s "$rpm_description" |tr '\n' ' ')" "$f"
+		FileError "invalid DESCRIPTION: $(printf %s "$rpm_description" |tr -s '[:space:]' ' ')" "$f"
 		return 1
 	fi
 	return 0
@@ -212,13 +212,13 @@ check_changelog()
 	local f="$1" && shift || return 1
 	local rc=0
 
-	if ! [ "$((current_time+86400))" -ge "$rpm_changelogtime" ]; then
+	if ! [ "$((current_time+86400))" -ge "$rpm_changelogtime" ] 2>/dev/null; then
 		FileError "wrong CHANGELOGTIME: $(date -d "1970-01-01 UTC $rpm_changelogtime seconds")" "$f"
 		rc=1
 	fi
 
 	if ! printf %s "$rpm_changelogtext" |sed -e 's/[^[:alnum:]]//g' |grep -qsv '^$'; then
-		FileError "invalid CHANGELOGTEXT: $(printf %s "$rpm_changelogtext" |tr '\n' ' ')" "$f"
+		FileError "invalid CHANGELOGTEXT: $(printf %s "$rpm_changelogtext" |tr -s '[:space:]' ' ')" "$f"
 		rc=1
 	fi
 
@@ -259,13 +259,13 @@ check_deps()
 
 	bad="$(printf %s "$rpm_deps" |grep '[$%]')"
 	if [ -n "$bad" ]; then
-		FileError "invalid dependencies: $(printf %s "$bad" |tr '\n' ' ')" "$f"
+		FileError "invalid dependencies: $(printf %s "$bad" |tr -s '[:space:]' ' ')" "$f"
 		rc=1
 	fi
 
 	bad="$(printf %s "$rpm_requires" |egrep '^(fileutils|initscripts|sh-utils|textutils|/etc/rc\.d/init\.d\((daemon|killproc|pidof)\)|pam_stack\.so)$')"
 	if [ -n "$bad" ]; then
-		FileError "forbidden requires: $(printf %s "$bad" |tr '\n' ' ')" "$f"
+		FileError "forbidden requires: $(printf %s "$bad" |tr -s '[:space:]' ' ')" "$f"
 		rc=1
 	fi
 
@@ -306,14 +306,14 @@ check_fhs()
 			[ -n "$n" -a -n "$v" -a -z "${rpm_name##$n}" ] || continue
 			printf %s\\n "$v"
 		done |LC_COLLATE=C sort -u)" || return 1
-	pattern="$(printf %s "$pattern" |tr '\n' '|')"
+	pattern="$(printf %s "$pattern" |tr -s '\n' '|')"
+	[ "$pattern" != '' ] || pattern='^$'
 
 	list="$(printf %s "$list" |egrep -v "$pattern")" ||
 		return 0
-	list="$(printf %s "$list" |tr '\n' ' ')"
 
-	if printf %s "$list" |egrep -ve '^/(bin|boot|etc|lib|sbin|usr/(X11R6|bin|etc|games|include|lib|sbin|share|src)|var/(cache|lib|lock|log|run|spool|www|yp))/.*' >&2; then
-		FileError "FHS-2.2 violations: $list" "$f"
+	if printf %s "$list" |egrep -vqse '^/(bin|boot|etc|lib|sbin|usr/(X11R6|bin|etc|games|include|lib|sbin|share|src)|var/(cache|lib|lock|log|run|spool|www|yp))/.*' >&2; then
+		FileError "FHS-2.2 violations: $(printf %s "$list" |tr -s '[:space:]' ' ')" "$f"
 		return 1
 	fi
 	return 0
@@ -363,7 +363,7 @@ check_intersects()
 	fi
 
 	if [ -n "$text" ]; then
-		FileError "$text" "$f"
+		FileError "filesystem intersections: $(printf %s "$text" |tr -s '[:space:]' ' ')" "$f"
 		rc=1
 	fi
 
@@ -606,11 +606,11 @@ Valid options are:
   --show-bad-files
   --no-check=LIST
 EOF
-	echo "$check_env" |sed -ne 's/.*/  --&/pg' |tr _ -
+	printf %s\\n "$check_env" |sed -ne 's/.*/  --&/pg' |tr _ -
 	[ -n "$1" ] && exit "$1" || exit
 }
 
-TEMP=`getopt -n $PROG -o h,q,v -l help,quiet,verbose,fast-check,show-bad-files,no-check:,no-check-,$(echo "$check_env" |tr _ - |xargs echo |tr ' ' ',') -- "$@"` || Usage
+TEMP=`getopt -n $PROG -o h,q,v -l help,quiet,verbose,fast-check,show-bad-files,no-check:,no-check-,$(printf %s "$check_env" |tr _ - |tr -s '[:space:]' ',') -- "$@"` || Usage
 eval set -- "$TEMP"
 
 while :; do
