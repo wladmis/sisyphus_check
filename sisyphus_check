@@ -351,20 +351,31 @@ check_deps()
 	return $rc
 }
 
-# check files intersections with filesystem
+# check files intersections with known packages
 export no_check_content=
 check_content()
 {
 	[ -z "$no_check_content" ] || return 0
 	local f="$1" && shift || return 1
+	local rc=0
 	local bad
 
 	if bad="$(printf %s "$rpm_filelist" |egrep -e '^(/usr(/X11R6)?)?/lib/lib[^/]+\.la$')"; then
 		FileError "forbidden .la files: $(printf %s "$bad" |tr -s '[:space:]' ' ')" "$f"
-		return 1
+		rc=1
 	fi
 
-	return 0
+	if [ "$rpm_name" != rpm ] && bad="$(printf %s "$rpm_filelist" |egrep -e '^/etc/rpm(/macros\.d)$')"; then
+		FileError "intersections with rpm: $(printf %s "$bad" |tr -s '[:space:]' ' ')" "$f"
+		rc=1
+	fi
+
+	if [ "$rpm_name" != control ] && bad="$(printf %s "$rpm_filelist" |egrep -e '^/etc/control\.d(/facilities)?$')"; then
+		FileError "intersections with control: $(printf %s "$bad" |tr -s '[:space:]' ' ')" "$f"
+		rc=1
+	fi
+
+	return $rc
 }
 
 # check for FHS-2.2 violations
