@@ -20,6 +20,7 @@ Usage: $PROG [options] <directory>...
 
 Valid options are:
   --quiet
+  --verbose
   --show-bad-files
   --no-check=LIST
 EOF
@@ -27,7 +28,7 @@ EOF
 	[ -n "$1" ] && exit "$1" || exit
 }
 
-TEMP=`getopt -n $PROG -o h -l quiet,fast-check,show-bad-files,no-check:,no-check-,$(echo "$check_env" |tr _ - |xargs echo |tr ' ' ','),help -- "$@"` || Usage
+TEMP=`getopt -n $PROG -o h,q,v -l quiet,verbose,fast-check,show-bad-files,no-check:,no-check-,$(echo "$check_env" |tr _ - |xargs echo |tr ' ' ','),help -- "$@"` || Usage
 eval set -- "$TEMP"
 
 while :; do
@@ -54,6 +55,8 @@ while :; do
 			eval $arg=1
 			;;
 		-q|--quiet) quiet=-q
+			;;
+		-v|--verbose) quiet=
 			;;
 		--fast-check) fast_check=1
 			;;
