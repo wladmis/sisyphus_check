@@ -1,40 +1,37 @@
 # $Id$
 
-Name: sisyphus
-Version: 0.7.1
+Name: sisyphus_check
+Version: 0.7.2
 Release: alt1
 
-Summary: Helpers for Sisyphus
+Summary: package checker for Sisyphus
 License: GPL
 Group: Development/Other
 BuildArch: noarch
+Conflicts: sisyphus < 0.7.2
 
 # get the source from our cvs repository
 Source: %name-%version.tar.bz2
 
 %description
-This package contains utilities to ease Sisyphus maintainance.
+This package contains sisyphus_check utility.
 
 %prep
 %setup -q
 
 %install
-%__mkdir_p $RPM_BUILD_ROOT%_sysconfdir/%name
-%__install -p -m644 etc/* $RPM_BUILD_ROOT%_sysconfdir/%name/
-
-%__mkdir_p $RPM_BUILD_ROOT%_bindir
-%__install -p -m755 bin/* $RPM_BUILD_ROOT%_bindir/
-
-%__ln_s sisyphus_cleanup_incoming $RPM_BUILD_ROOT%_bindir/incoming_cleanup
+%__install -pD -m644 fhs $RPM_BUILD_ROOT%_sysconfdir/%name/fhs
+%__install -pD -m755 %name $RPM_BUILD_ROOT%_bindir/%name
 
 %files
 %dir %_sysconfdir/%name
-%config(noreplace) %_sysconfdir/%name/config
 %config %_sysconfdir/%name/fhs
-%config %_sysconfdir/%name/functions
 %_bindir/*
 
 %changelog
+* Thu Jun 24 2004 Dmitry V. Levin <ldv@altlinux.org> 0.7.2-alt1
+- Moved sisyphus_check to separate subpackage.
+
 * Mon Jun 07 2004 Dmitry V. Levin <ldv@altlinux.org> 0.7.1-alt1
 - functions: fixed quiet mode.
 - sisyphus_check: added new option: verbose.
