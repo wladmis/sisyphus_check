@@ -1,4 +1,5 @@
 #!/bin/bash -e
+# $Id$
 
 . /etc/sisyphus/functions
 . /etc/sisyphus/config
