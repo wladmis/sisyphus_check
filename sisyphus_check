@@ -24,12 +24,12 @@ PROG="${0##*/}"
 
 Info()
 {
-	printf '%s\n' "${0##*/}: $*" >&2
+	printf '%s\n' "$PROG: $*" >&2
 }
 
 Fatal()
 {
-	printf %s\\n "${0##*/}: $*" >&2
+	printf %s\\n "$PROG: $*" >&2
 	exit 1
 }
 
