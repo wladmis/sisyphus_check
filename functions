@@ -1,0 +1,620 @@
+#!/bin/sh -e
+
+# debug mode for cleanup stuff
+: ${test:=}
+
+unset CDPATH ||:
+PROG="${0##*/}"
+
+Fatal()
+{
+	echo "${0##*/}: $*" >&2
+	exit 1
+}
+
+# find orphaned SRPMS
+check_obsolete_srpms()
+{
+	local rpms_dir="$1"
+	shift || return
+	local srpms_dir="$1"
+	shift || return
+
+	local rc=0
+	local list=
+	local f n
+
+	pushd "$rpms_dir" >/dev/null #RPMS
+	for f in *.rpm; do
+		if [ ! -f "$f" ]; then
+			[ "$f" != '*.rpm' ] || continue
+			echo "not a regular file: $f" >&2
+			rc=1
+			continue
+		fi
+		n=`rpmquery -p --qf '%{SOURCERPM}' -- "$f"` ||
+			{ rc=1; continue; }
+		n="${n%.src.rpm}"
+		n="${n%.nosrc.rpm}"
+		list="$list
+$n"
+	done
+	popd >/dev/null
+
+	pushd "$srpms_dir" >/dev/null #SRPMS
+	for f in *.rpm; do
+		if [ ! -f "$f" ]; then
+			[ "$f" != '*.rpm' ] || continue
+			echo "not a regular file: $f" >&2
+			rc=1
+			continue
+		fi
+		n="${f%.src.rpm}"
+		n="${n%.nosrc.rpm}"
+		if ! echo "$list" |grep -qs "^$n\$"; then
+			echo "$f"
+			rc=1
+		fi
+	done
+	popd >/dev/null
+
+	return $rc
+}
+
+# find orphaned RPMS
+check_missing_srpms()
+{
+	local rpms_dir="$1"
+	shift || return
+	local srpms_dir="$1"
+	shift || return
+
+	local rc=0
+	local f n
+
+	for f in "$rpms_dir"/*.rpm; do
+		if [ ! -f "$f" ]; then
+			[ "$f" != "$rpms_dir/*.rpm" ] || continue
+			echo "not a regular file: $f" >&2
+			rc=1
+			continue
+		fi
+		n=`rpmquery -p --qf '%{SOURCERPM}' -- "$f"` ||
+			{ rc=1; continue; }
+		n="${n%.src.rpm}"
+		n="${n%.nosrc.rpm}"
+		if ! [ -f "$srpms_dir/$n.src.rpm" -o -f "$srpms_dir/$n.nosrc.rpm" ]; then
+			echo -e "$f:\t$n"
+			rc=1
+		fi
+	done
+
+	return $rc
+}
+
+# check package signs
+export no_check_gpg=
+check_gpg()
+{
+	[ -z "$no_check_gpg" ] || return 0
+	local rc=0
+	local d f s
+
+	for d in "$@"; do
+		[ -d "$d" ] || { echo "not a directory: $d" >&2; rc=1; continue; }
+		for f in "$d"/*.rpm; do
+			if [ ! -f "$f" ]; then
+				[ "$f" != "$d/*.rpm" ] || continue
+				echo "not a regular file: $f" >&2
+				rc=1
+				continue
+			fi
+			s="$(LC_ALL=C GNUPGHOME=/usr/lib/alt-gpgkeys rpm -K "$f")" ||
+				{ echo "$s"; rc=1; continue; }
+			echo "$s" |grep -v ': md5 gpg OK$' && rc=1 ||:
+		done
+	done
+	return $rc
+}
+
+# check for printable summary, description, etc.
+export no_check_printable=
+check_printable()
+{
+	[ -z "$no_check_printable" ] || return 0
+	local rc=0
+	local d f t
+
+	for d in "$@"; do
+		[ -d "$d" ] || { echo "not a directory: $d" >&2; rc=1; continue; }
+		for f in "$d"/*.rpm; do
+			if [ ! -f "$f" ]; then
+				[ "$f" != "$d/*.rpm" ] || continue
+				echo "not a regular file: $f" >&2
+				rc=1
+				continue
+			fi
+			t="$(LANG=C LANGUAGE=C LC_ALL=C rpmquery -pi "$f")" ||
+				{ rc=1; continue; }
+			if [ -n "$(echo "$t" |tr -d '[:print:][:space:]')" ]; then
+				echo "$f: unprintable package information" >&2
+				rc=1
+			fi
+		done
+	done
+	return $rc
+}
+
+# check for valid group
+export no_check_group=
+check_group()
+{
+	[ -z "$no_check_group" ] || return 0
+	local rc=0
+	local d f g
+
+	for d in "$@"; do
+		[ -d "$d" ] || { echo "not a directory: $d" >&2; rc=1; continue; }
+		for f in "$d"/*.rpm; do
+			if [ ! -f "$f" ]; then
+				[ "$f" != "$d/*.rpm" ] || continue
+				echo "not a regular file: $f" >&2
+				rc=1
+				continue
+			fi
+			g=`LANG=C rpmquery -p --qf='%{GROUP}' "$f"` ||
+				{ rc=1; continue; }
+			if ! grep -qs "^$g$" /usr/lib/rpm/GROUPS; then
+				echo "$f: wrong GROUP: $g" >&2
+				rc=1
+			fi
+		done
+	done
+	return $rc
+}
+
+# check for valid buildhost
+export no_check_buildhost=
+check_buildhost()
+{
+	[ -z "$no_check_buildhost" ] || return 0
+	local rc=0
+	local d f p
+
+	for d in "$@"; do
+		[ -d "$d" ] || { echo "not a directory: $d" >&2; rc=1; continue; }
+		for f in "$d"/*.rpm; do
+			if [ ! -f "$f" ]; then
+				[ "$f" != "$d/*.rpm" ] || continue
+				echo "not a regular file: $f" >&2
+				rc=1
+				continue
+			fi
+			[ -n "${f%%*src.rpm}" ] || continue
+			p="$(LANG=C rpmquery -p --qf='%{BUILDHOST}' "$f")" ||
+				{ rc=1; continue; }
+			if ! echo "$p" |egrep -qs '^[^.]+\.(hasher|sandman)\.altlinux\.org$'; then
+				echo "$f: wrong BUILDHOST: $p" >&2
+				rc=1
+			fi
+		done
+	done
+	return $rc
+}
+
+# check for FHS-2.2 violations
+export no_check_fhs=
+check_fhs()
+{
+	[ -z "$no_check_fhs" ] || return 0
+	local rc=0
+	local d f
+	local list name pattern
+
+	for d in "$@"; do
+		[ -d "$d" ] || { echo "not a directory: $d" >&2; rc=1; continue; }
+		for f in "$d"/*.rpm; do
+			if [ ! -f "$f" ]; then
+				[ "$f" != "$d/*.rpm" ] || continue
+				echo "not a regular file: $f" >&2
+				rc=1
+				continue
+			fi
+
+			name=`rpmquery -p --qf '%{NAME}' "$f"` ||
+				{ rc=1; continue; }
+			[ "$name" != filesystem ] || continue
+
+			list="$(LC_ALL=C rpmquery -pl "$f")" ||
+				{ rc=1; continue; }
+			list=$(printf %s "$list" |grep -e '^/')
+			[ -n "$list" ] || continue
+
+			pattern="$(grep '^[^#]' /etc/sisyphus/fhs |
+			while read -r n v; do
+				[ -z "${name##$n}" ] || continue
+				printf '%s\n' "$v"
+			done)" ||
+				{ rc=1; continue; }
+
+			list="$(printf %s "$list" |egrep -vf <(printf %s "$pattern") )"
+			
+			if printf %s "$list" |egrep -ve '^/(bin|boot|etc|lib|sbin|usr/(X11R6|bin|etc|games|include|lib|sbin|share|src)|var/(cache|lib|lock|log|run|spool|www|yp))/.*'; then
+				echo "$f: FHS-2.2 violations" >&2
+				rc=1
+				continue
+			fi
+		done
+	done
+	return $rc
+}
+
+# check files permissions
+export no_check_perms=
+check_perms()
+{
+	[ -z "$no_check_perms" ] || return 0
+	local rc=0
+	local d f
+	local list
+
+	for d in "$@"; do
+		[ -d "$d" ] || { echo "not a directory: $d" >&2; rc=1; continue; }
+		for f in "$d"/*.rpm; do
+			if [ ! -f "$f" ]; then
+				[ "$f" != "$d/*.rpm" ] || continue
+				echo "not a regular file: $f" >&2
+				rc=1
+				continue
+			fi
+			list="$(LC_ALL=C rpmquery -plv "$f")" ||
+				{ rc=1; continue; }
+			if echo "$list" |egrep -e '^-..s(r|.w|...r|....w)|^-...((r.|.w)s|..s(r|.w))'; then
+				echo "$f: bad permissions for suid/sgid files" >&2
+				rc=1
+			fi
+			if echo "$list" |egrep -e '^[^l]....(w|...w)[^/]+/usr/'; then
+				echo "$f: writable files in /usr/" >&2
+				rc=1
+			fi
+			if [ -z "${f%%*src.rpm}" ]; then
+				if echo "$list" |egrep -e '^-([^r]|.[^w])'; then
+					echo "$f: bad permissions in source archive" >&2
+					rc=1
+				fi
+			fi
+		done
+	done
+	return $rc
+}
+
+# check files intersections with filesystem
+export no_check_intersects=
+check_intersects()
+{
+	[ -z "$no_check_intersects" ] || return 0
+	local rc=0
+	local d f
+	local m_name=filesystem
+	local m_list
+	m_list="$(rpmquery -l "$m_name")" || return 0
+
+	for d in "$@"; do
+		[ -d "$d" ] || { echo "not a directory: $d" >&2; rc=1; continue; }
+		for f in "$d"/*.rpm; do
+			if [ ! -f "$f" ]; then
+				[ "$f" != "$d/*.rpm" ] || continue
+				echo "not a regular file: $f" >&2
+				rc=1
+				continue
+			fi
+			local name
+			name=`rpmquery -p --qf '%{NAME}' "$f"` ||
+				{ rc=1; continue; }
+			[ "$m_name" != "$name" ] || continue
+			local list
+			list="$(rpmquery -pl "$f")" ||
+				{ rc=1; continue; }
+			local s
+			s="$((echo "$m_list"; echo "$list") |LC_COLLATE=C sort |uniq -c |grep '^ *2' ||:)" ||
+				{ rc=1; continue; }
+			if [ -n "$s" ]; then
+				echo "$f:" `echo "$s" |cut -f2-`
+				rc=1
+			fi
+		done
+	done
+	return $rc
+}
+
+packager_pattern='<[^@]+(@| at )(packages\.)?altlinux(\.| dot )(com|net|org|ru)>'
+
+# check for valid format of PACKAGER tag 
+export no_check_packager=
+check_packager()
+{
+	[ -z "$no_check_packager" ] || return 0
+	local rc=0
+	local d f p
+
+	for d in "$@"; do
+		[ -d "$d" ] || { echo "not a directory: $d" >&2; rc=1; continue; }
+		for f in "$d"/*.rpm; do
+			if [ ! -f "$f" ]; then
+				[ "$f" != "$d/*.rpm" ] || continue
+				echo "not a regular file: $f" >&2
+				rc=1
+				continue
+			fi
+			p="$(LANG=C rpmquery -p --qf='%{PACKAGER}' "$f")" ||
+				{ rc=1; continue; }
+			if ! echo "$p" |egrep -qs "$packager_pattern"; then
+				echo "$f: wrong PACKAGER: $p" >&2
+				rc=1
+			fi
+		done
+	done
+	return $rc
+}
+
+# check changelog format
+export no_check_changelog=
+check_changelog()
+{
+	[ -z "$no_check_changelog" ] || return 0
+	local rc=0
+	local d f
+
+	for d in "$@"; do
+		[ -d "$d" ] || { echo "not a directory: $d" >&2; rc=1; continue; }
+		for f in "$d"/*.rpm; do
+			if [ ! -f "$f" ]; then
+				[ "$f" != "$d/*.rpm" ] || continue
+				echo "not a regular file: $f" >&2
+				rc=1
+				continue
+			fi
+			[ -z "${f%%*src.rpm}" ] || continue
+
+			local changelogname
+			changelogname="$(LC_ALL=C rpmquery -p --qf '%{CHANGELOGNAME}\n' "$f")" ||
+				{ rc=1; continue; }
+
+			local c_found
+			c_found=`echo "$changelogname" |sed -ne '/^(none)$/q;s/[^<]\+<[^>]\+> *\(.\+\)$/\1/pg'` ||
+				{ rc=1; continue; }
+			local c_expected
+			c_expected=`LC_ALL=C rpmquery -p --qf '%|SERIAL?{%{SERIAL}:}|%{VERSION}-%{RELEASE}\n' "$f"` ||
+				{ rc=1; continue; }
+			if [ "$c_expected" != "$c_found" ]; then
+				echo "$f: wrong changelog: expected \"$c_expected\", found \"$c_found\"" >&2
+				rc=1
+			fi
+
+			if ! echo "$changelogname" |egrep -qs "$packager_pattern"; then
+				echo "$f: wrong packager in changelog: $changelogname" >&2
+				rc=1
+			fi
+		done
+	done
+	return $rc
+}
+
+# check for inacceptable dependencies
+export no_check_deps=
+check_deps()
+{
+	[ -z "$no_check_deps" ] || return 0
+	local rc=0
+	local d f dep bad
+
+	for d in "$@"; do
+		[ -d "$d" ] || { echo "not a directory: $d" >&2; rc=1; continue; }
+		for f in "$d"/*.rpm; do
+			if [ ! -f "$f" ]; then
+				[ "$f" != "$d/*.rpm" ] || continue
+				echo "not a regular file: $f" >&2
+				rc=1
+				continue
+			fi
+			dep="$(LANG=C rpmquery -p --requires --provides --obsoletes --conflicts "$f")" ||
+				{ rc=1; continue; }
+			if bad="$(echo -E "$dep" |grep '[$%]')"; then
+				if [ -n "$bad" ]; then
+					echo "$f: invalid dependencies: $(echo "$bad" |xargs echo)" >&2
+					rc=1
+				fi
+			fi
+			dep="$(LANG=C rpmquery -pR "$f")" ||
+				{ rc=1; continue; }
+			bad="$(echo -E "$dep" |egrep '^(fileutils|sh-utils|textutils|/etc/rc\.d/init\.d\((daemon|killproc|pidof)\)|pam_stack\.so)[[:space:]]*$')" || continue
+			if [ -n "$bad" ]; then
+				echo "$f: forbidden requires: $(echo "$bad" |xargs echo)" >&2
+				rc=1
+			fi
+		done
+	done
+	return $rc
+}
+
+# incoming specific checking 
+check_incoming()
+{
+	if ! check_missing_srpms "$@"; then
+		echo "ERROR: you have orphaned RPMS"
+		return 1
+	fi
+
+	if ! check_obsolete_srpms "$@"; then
+		echo "ERROR: you have orphaned SRPMS"
+		return 1
+	fi
+	check "$@"
+}
+
+# cummulative check
+check()
+{
+	local rc=0
+
+	# quick arg check.
+	local d
+	for d in "$@"; do
+		[ -d "$d" ] || { echo "not a directory: $d" >&2; rc=1; continue; }
+	done
+	[ $rc = 0 ] || return $rc
+
+	if ! check_gpg "$@"; then
+		echo "ERROR: you have problems with package signatures"
+		rc=1
+	fi
+
+	if ! check_printable "$@"; then
+		echo "ERROR: you have problems with package information"
+		rc=1
+	fi
+
+	if ! check_packager "$@"; then
+		echo "ERROR: you have problems with packager name"
+		rc=1
+	fi
+
+	if ! check_buildhost "$@"; then
+		echo "ERROR: you have problems with buildhost name"
+		rc=1
+	fi
+
+	if ! check_group "$@"; then
+		echo "ERROR: you have problems with package group"
+		rc=1
+	fi
+
+	if ! check_changelog "$@"; then
+		echo "ERROR: you have problems with changelog format"
+		rc=1
+	fi
+
+	if ! check_deps "$@"; then
+		echo "ERROR: you have problems with package dependencies"
+		rc=1
+	fi
+
+	if ! check_fhs "$@"; then
+		echo "ERROR: you have problems with standards"
+		rc=1
+	fi
+
+	if ! check_perms "$@"; then
+		echo "ERROR: you have problems with file permissions"
+		rc=1
+	fi
+
+	if ! check_intersects "$@"; then
+		echo "ERROR: you have package intersections"
+		rc=1
+	fi
+	return $rc
+}
+
+# upload source packages
+upload_src_new()
+{
+	pushd $1 >/dev/null
+
+	local f
+	for f in *.rpm; do
+		if [ ! -f "$f" ]; then
+			[ "$f" != '*.rpm' ] || continue
+			echo "not a regular file: $f" >&2
+			rc=1
+			continue
+		fi
+		$test cp -pv -- "$f" "$PREFIX/files/SRPMS/"
+	done
+
+	cleanup_incoming *.rpm
+
+	popd >/dev/null
+}
+
+# upload binary packages
+upload_bin_new()
+{
+	pushd $1 >/dev/null
+
+	local f
+	for f in *.rpm; do
+		if [ ! -f "$f" ]; then
+			[ "$f" != '*.rpm' ] || continue
+			echo "not a regular file: $f" >&2
+			rc=1
+			continue
+		fi
+		$test cp -pv -- "$f" "$PREFIX/files/i586/RPMS/"
+	done
+
+	cleanup_incoming *.rpm
+
+	popd >/dev/null
+}
+
+identic()
+{
+	local f1="$1"
+	shift || return
+	local f2="$1"
+	shift || return
+	local i1 i2
+	i1="$(stat -- "$f1" |grep '^Device: ')"
+	i2="$(stat -- "$f2" |grep '^Device: ')"
+	[ "$i1" = "$i2" ]
+}
+
+target_cleanup()
+{
+	local f=$1
+	shift || return
+	local n="${f##*/}"
+
+	local rep
+	for rep in "$@"; do
+		local target="$PREFIX/$rep/$n"
+		if [ -f "$target" ]; then
+			# file with same name exists
+			if identic "$f" "$target"; then
+				# shouldn't normally happen
+				echo "$f: belongs to $rep!!!"
+				return 1
+			elif cmp -s "$f" "$target"; then
+				$test rm -fv -- "$f"
+			else
+				echo "$f: differ from $rep!"
+				return 1
+			fi
+			return
+		fi
+	done
+	echo "$f: new file!"
+}
+
+cleanup_incoming()
+{
+	local rc=0
+	local f
+	for f in "$@"; do
+		if [ ! -r "$f" ]; then
+			echo "$f: unavailable"
+			continue
+		fi
+		local type
+		type="$(file -b "$f")" || { rc=1; continue; }
+		if [ -z "${type##RPM v3 src *}" ]; then
+			target_cleanup "$f" $SRC_REPOSITORIES $NEW_SRC_REPOSITORIES || rc=1
+		elif [ -z "${type##RPM v3 bin *}" ]; then
+			target_cleanup "$f" $BIN_REPOSITORIES $NEW_BIN_REPOSITORIES || rc=1
+		else
+			echo "$f: unrecognized type: $type" || rc=1
+		fi
+	done
+	return $rc
+}

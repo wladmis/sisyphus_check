@@ -1,0 +1,16 @@
+# pkgname_pattern	pathname_regexp
+Firebird[CS]S		^/opt/interbase($|/)
+MAKEDEV			^/dev/MAKEDEV$
+SysVinit		^/dev/initctl$
+acct			^/var/account($|/)
+anonftp			^/var/ftp($|/)
+apache-common		^/var/www($|/)
+avr-*			^/usr/avr($|/)
+chrooted-resolv		^/var/resolv($|/)
+dev			^/dev($|/)
+gpm			^/dev/gpmctl$
+i386-mingw32msvc-*	^/usr/i386-mingw32msvc($|/)
+m68k-palmos-*		^/usr/m68k-palmos($|/)
+oracle-preinstall	^/opt/oracle($|/)
+pam[02]_mktemp		^/tmp/\.private$
+rootfiles		^/root($|/)
