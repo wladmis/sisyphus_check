@@ -124,7 +124,7 @@ check_description()
 	local f="$1" && shift || return 1
 
 	if ! printf %s "$rpm_description" |egrep -qs '[[:alpha:]]'; then
-		FileError "invalid DESCRIPTION" "$f"
+		FileError "invalid DESCRIPTION: $(printf %s "$rpm_description" |tr '\n' ' ')" "$f"
 		return 1
 	fi
 	return 0
@@ -207,7 +207,7 @@ check_changelog()
 	fi
 
 	if ! printf %s "$rpm_changelogtext" |sed -e 's/[^[:alnum:]]//g' |grep -qsv '^$'; then
-		FileError "invalid CHANGELOG" "$f"
+		FileError "invalid CHANGELOG: $(printf %s "$rpm_changelogtext" |tr '\n' ' ')" "$f"
 		rc=1
 	fi
 
