@@ -37,7 +37,8 @@ This package contains utilities to ease Sisyphus maintainance.
 %changelog
 * Sat Jun 05 2004 Dmitry V. Levin <ldv@altlinux.org> 0.7.0-alt1
 - functions: reimplemented, thanks to legion@.
-- sisyphus_check: added new options: quiet, show-bad-files.
+- sisyphus_check: added new options:
+  quiet, fast-check, show-bad-files.
 
 * Thu May 13 2004 Dmitry V. Levin <ldv@altlinux.org> 0.6.0-alt1
 - sisyphus_relink: added support for new style lists.

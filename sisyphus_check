@@ -27,7 +27,7 @@ EOF
 	[ -n "$1" ] && exit "$1" || exit
 }
 
-TEMP=`getopt -n $PROG -o h -l quiet,show-bad-files,no-check:,no-check-,$(echo "$check_env" |tr _ - |xargs echo |tr ' ' ','),help -- "$@"` || Usage
+TEMP=`getopt -n $PROG -o h -l quiet,fast-check,show-bad-files,no-check:,no-check-,$(echo "$check_env" |tr _ - |xargs echo |tr ' ' ','),help -- "$@"` || Usage
 eval set -- "$TEMP"
 
 while :; do
@@ -54,6 +54,8 @@ while :; do
 			eval $arg=1
 			;;
 		-q|--quiet) quiet=-q
+			;;
+		--fast-check) fast_check=1
 			;;
 		--show-bad-files) show_bad_files=1
 			;;
