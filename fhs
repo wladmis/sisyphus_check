@@ -15,3 +15,4 @@ m68k-palmos-*		^/usr/m68k-palmos($|/)
 oracle-preinstall	^/opt/oracle($|/)
 pam[02]_mktemp		^/tmp/\.private$
 rootfiles		^/root($|/)
+udev			^/dev($|/)
