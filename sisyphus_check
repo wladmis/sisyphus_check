@@ -20,6 +20,13 @@ unset \
 	LC_ALL \
 	||:
 
+PROG="${0##*/}"
+
+Info()
+{
+	printf '%s\n' "${0##*/}: $*" >&2
+}
+
 Fatal()
 {
 	printf %s\\n "${0##*/}: $*" >&2
@@ -587,7 +594,7 @@ EOF
 	[ -n "$1" ] && exit "$1" || exit
 }
 
-TEMP=`getopt -n $PROG -o h,q,v -l quiet,verbose,fast-check,show-bad-files,no-check:,no-check-,$(echo "$check_env" |tr _ - |xargs echo |tr ' ' ','),help -- "$@"` || Usage
+TEMP=`getopt -n $PROG -o h,q,v -l help,quiet,verbose,fast-check,show-bad-files,no-check:,no-check-,$(echo "$check_env" |tr _ - |xargs echo |tr ' ' ',') -- "$@"` || Usage
 eval set -- "$TEMP"
 
 while :; do
