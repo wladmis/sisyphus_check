@@ -72,7 +72,7 @@ FileError()
 		text="$f: $text"
 		[ -z "$show_bad_files" ] || printf %s\\n "$f"
 	fi
-	printf %s\\n "$text" >&2
+	printf %s\\n "$(printf %s "$text" |tr '[:cntrl:]' ' ')" >&2
 }
 
 # check package signature
@@ -88,6 +88,8 @@ check_gpg()
 		return 1
 	fi
 	if text="$(printf %s "$text" |grep -v ': md5 gpg OK$')"; then
+		text="$(printf %s "$text" |tr -s '[:space:]' ' ')"
+		text="${text#$f: }"
 		FileError "bad SIGNATURE: $(printf %s "$text" |tr -s '[:space:]' ' ')" "$f"
 		return 1
 	fi
