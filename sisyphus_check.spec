@@ -1,7 +1,7 @@
 # $Id$
 
 Name: sisyphus
-Version: 0.7.0
+Version: 0.7.1
 Release: alt1
 
 Summary: Helpers for Sisyphus
@@ -35,6 +35,11 @@ This package contains utilities to ease Sisyphus maintainance.
 %_bindir/*
 
 %changelog
+* Mon Jun 07 2004 Dmitry V. Levin <ldv@altlinux.org> 0.7.1-alt1
+- functions: fixed quiet mode.
+- sisyphus_check: added new option: verbose.
+- sisyphus_add_new: enabled quiet mode by default.
+
 * Sat Jun 05 2004 Dmitry V. Levin <ldv@altlinux.org> 0.7.0-alt1
 - functions: optimized, thanks to legion@.
 - functions/check_buildtime: new check.
