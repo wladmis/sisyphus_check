@@ -1,7 +1,7 @@
 # $Id$
 
 Name: sisyphus_check
-Version: 0.7.7
+Version: 0.7.8
 Release: alt1
 
 Summary: package checker for Sisyphus
@@ -31,6 +31,9 @@ This package contains sisyphus_check utility.
 %_bindir/*
 
 %changelog
+* Fri Oct 22 2004 Dmitry V. Levin <ldv@altlinux.org> 0.7.8-alt1
+- Implemented support for check_gpgname() exceptions (legion).
+
 * Wed Sep 01 2004 Dmitry V. Levin <ldv@altlinux.org> 0.7.7-alt1
 - check_content, check_fhs: enhanced error diagnostics.
 

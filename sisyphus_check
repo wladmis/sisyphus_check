@@ -79,6 +79,7 @@ FileError()
 rpm_signature=
 skip_check_gpgname=
 trust_gpg_names='security'
+no_gpgname_packagers='kernel@packages.altlinux.org'
 
 # check changelog format
 export no_check_changelog=
@@ -163,6 +164,14 @@ export no_check_gpgname=
 check_gpgname()
 {
 	[ -z "$no_check_gpg" -a -z "$no_check_gpgname" -a -z "$skip_check_gpgname" ] || return 0
+
+	local packager pname
+	packager="$(printf %s "$rpm_packager" |
+		sed -ne 's/^[^<]*<\([^@]\+\(@\| at \)[^>]\+\)>.*/\1/p' |
+		tr -s '[:space:]' ' ')"
+	for pname in $no_gpgname_packagers; do
+		[ "$pname" != "$packager" ] || return 0
+	done
 
 	local f="$1" && shift || return 1
 	local chlogname sed_gpg_name gpg_name
