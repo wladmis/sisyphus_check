@@ -33,6 +33,7 @@ This package contains sisyphus_check utility.
 %changelog
 * Wed Jul 07 2004 Dmitry V. Levin <ldv@altlinux.org> 0.7.3-alt1
 - check_fhs,check_intersects: do not use command substitutions.
+- Enhanced error diagnostics a bit.
 
 * Thu Jun 24 2004 Dmitry V. Levin <ldv@altlinux.org> 0.7.2-alt1
 - Moved sisyphus_check to separate subpackage.
