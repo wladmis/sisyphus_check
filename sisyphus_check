@@ -3,10 +3,13 @@
 . /etc/sisyphus/functions
 . /etc/sisyphus/config
 
+check_env="$(printenv |sed -ne 's/^\(no_check_[a-z]\+\)=.*/\1/pg')"
+
 Usage()
 {
 	[ "$1" = 0 ] || exec >&2
 	cat <<EOF
+
 sisyphus_check - check packages for acceptability for Sisyphus.
 
 This program is free software, covered by the GNU General Public License.
@@ -15,17 +18,34 @@ sisyphus_check comes with ABSOLUTELY NO WARRANTY, see license for details.
 Usage: $PROG [options] <directory>...
 
 Valid options are:
+--no-check=LIST
 EOF
-	printenv |sed -ne 's/^\(no_check_[a-z]\+\)=.*/--\1/pg' |tr _ -
+	echo "$check_env" |sed -ne 's/.*/--&/pg' |tr _ -
 	[ -n "$1" ] && exit "$1" || exit
 }
 
-TEMP=`getopt -n $PROG -o h -l no-check-,$(printenv |sed -ne 's/^\(no_check_[a-z]\+\)=.*/\1/pg' |tr _ - |xargs echo |tr ' ' ','),help -- "$@"` || Usage
+TEMP=`getopt -n $PROG -o h -l no-check:,no-check-,$(echo "$check_env" |tr _ - |xargs echo |tr ' ' ','),help -- "$@"` || Usage
 eval set -- "$TEMP"
 
 while :; do
 	case "$1" in
-		--no-check-) Usage
+		--no-check)
+			shift
+			if [ -n "$(printf %s "$1" |tr -d '[:alpha:],[:space:]')" ]; then
+				Info "--no-check: invalid argument: $1"
+				Usage
+			fi
+			for arg in `printf %s "$1" |tr , ' '`; do
+				name="no_check_$arg"
+				if ! echo "$check_env" |grep -qs "^$name\$"; then
+					Info "--no-check: invalid argument: $arg"
+					Usage
+				fi
+				eval $name=1
+			done
+			shift
+			;;
+		--no-check-) Usage-
 			;;
 		--no-check-[a-z]*)
 			arg="no_check_${1##--no-check-}"
@@ -42,6 +62,9 @@ while :; do
 done
 
 # At least one argument, please.
-[ "$#" -ge 1 ] || Usage
+if ! [ "$#" -ge 1 ]; then
+	Info "at least one argument is required."
+	Usage
+fi
 
 check "$@"
