@@ -24,7 +24,7 @@ PROG="${0##*/}"
 
 Info()
 {
-	printf '%s\n' "$PROG: $*" >&2
+	printf %s\\n "$PROG: $*" >&2
 }
 
 Fatal()
@@ -63,7 +63,7 @@ check_gpg()
 	local f="$1" && shift || return 1
 	local text
 
-	if ! text="$(LANG=C LANGUAGE=C LC_ALL=C GNUPGHOME=/usr/lib/alt-gpgkeys rpmsign -K "$f")"; then
+	if ! text="$(LC_ALL=C GNUPGHOME=/usr/lib/alt-gpgkeys rpmsign -K "$f")"; then
 		FileError "$text" "$f"
 		return 1
 	fi
@@ -306,11 +306,14 @@ check_fhs()
 			[ -n "$n" -a -n "$v" -a -z "${rpm_name##$n}" ] || continue
 			printf %s\\n "$v"
 		done |LC_COLLATE=C sort -u)" || return 1
+	pattern="$(printf %s "$pattern" |tr '\n' '|')"
 
-	list="$(printf %s "$list" |egrep -vf <(printf %s "$pattern") )" || return 0
+	list="$(printf %s "$list" |egrep -v "$pattern")" ||
+		return 0
+	list="$(printf %s "$list" |tr '\n' ' ')"
 
 	if printf %s "$list" |egrep -ve '^/(bin|boot|etc|lib|sbin|usr/(X11R6|bin|etc|games|include|lib|sbin|share|src)|var/(cache|lib|lock|log|run|spool|www|yp))/.*' >&2; then
-		FileError "FHS-2.2 violations" "$f"
+		FileError "FHS-2.2 violations: $list" "$f"
 		return 1
 	fi
 	return 0
@@ -354,7 +357,7 @@ check_intersects()
 	# Do not check filesystem package.
 	[ "$rpm_name" != filesystem ] || return 0
 
-	if ! text="$(LC_COLLATE=C comm -12 <(printf %s "$fs_list") <(printf %s "$rpm_filelist"))"; then
+	if ! text="$(printf %s "$rpm_filelist" |LC_COLLATE=C comm -12 -- "$fs_list" -)"; then
 		FileError "comm failed" "$f"
 		rc=1
 	fi
@@ -367,13 +370,26 @@ check_intersects()
 	return $rc
 }
 
+fs_list=
+exit_handler()
+{
+	local rc=$?
+	trap - EXIT
+	[ -z "$fs_list" ] || rm -f -- "$fs_list"
+	exit $rc
+}
+
 init_check()
 {
-	unset current_time fs_list packager_pattern
+	unset current_time packager_pattern
+	local fs_filelist
 
-	current_time="$(date +%s)" || return 1
-	fs_list="$(LANG=C LANGUAGE=C LC_ALL=C rpmquery -l filesystem)" || return 1
-	fs_filelist="$(printf %s "$fs_filelist" |LC_COLLATE=C sort -u)" || return 1
+	trap exit_handler HUP PIPE INT QUIT TERM EXIT
+	fs_list="$(mktemp -t "$PROG.XXXXXXXXXX")"
+
+	fs_filelist="$(LC_ALL=C rpmquery -l filesystem)" || return 1
+	printf %s "$fs_filelist" |LC_COLLATE=C sort -u >"$fs_list"
+	current_time="$(date +%s)"
 	packager_pattern='<[^@]+(@| at )(packages\.)?altlinux(\.| dot )(com|net|org|ru)>'
 }
 
@@ -421,7 +437,7 @@ check()
 			local rpm_filelist rpm_long_filelist
 			local values
 
-			if ! values="$(LANG=C LANGUAGE=C LC_ALL=C rpmquery -p --qf='
+			if ! values="$(LC_ALL=C rpmquery -p --qf='
 rpm_arch=%{arch:shescape};
 rpm_buildhost=%{buildhost:shescape};
 rpm_buildtime=%{buildtime:shescape};
@@ -451,25 +467,25 @@ rpm_version=%{version:shescape};
 			eval "$values"
 			unset values
 
-			if ! rpm_deps="$(LANG=C LANGUAGE=C LC_ALL=C rpmquery -p --requires --provides --obsoletes --conflicts "$f")"; then
+			if ! rpm_deps="$(LC_ALL=C rpmquery -p --requires --provides --obsoletes --conflicts "$f")"; then
 				FileError "rpmquery failed" "$f"
 				rc=1
 				continue
 			fi
 
-			if ! rpm_requires="$(LANG=C LANGUAGE=C LC_ALL=C rpmquery -p --qf '[%{REQUIRENAME}\n]' "$f")"; then
+			if ! rpm_requires="$(LC_ALL=C rpmquery -p --qf '[%{REQUIRENAME}\n]' "$f")"; then
 				FileError "rpmquery failed" "$f"
 				rc=1
 				continue
 			fi
 
-			if ! rpm_filelist="$(LANG=C LANGUAGE=C LC_ALL=C rpmquery -pl "$f")"; then
+			if ! rpm_filelist="$(LC_ALL=C rpmquery -pl "$f")"; then
 				FileError "rpmquery failed" "$f"
 				rc=1
 				continue
 			fi
 
-			if ! rpm_long_filelist="$(LANG=C LANGUAGE=C LC_ALL=C rpmquery -plv "$f")"; then
+			if ! rpm_long_filelist="$(LC_ALL=C rpmquery -plv "$f")"; then
 				FileError "rpmquery failed" "$f"
 				rc=1
 				continue
