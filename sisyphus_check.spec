@@ -1,7 +1,7 @@
 # $Id$
 
 Name: sisyphus
-Version: 0.5.3
+Version: 0.5.4
 Release: alt1
 
 Summary: Helpers for Sisyphus
@@ -35,6 +35,13 @@ This package contains utilities to ease Sisyphus maintainance.
 %_bindir/*
 
 %changelog
+* Wed Nov 26 2003 Dmitry V. Levin <ldv@altlinux.org> 0.5.4-alt1
+- functions/check_content: new check (forbidden .la files).
+- config:
+  + define VERSION;
+  + added --no-oldhashfile to GENBASEDIR_OPT_ARGS.
+- sisyphus_genhash: pass architecture and version to genbasedir.
+
 * Sun Nov 02 2003 Dmitry V. Levin <ldv@altlinux.org> 0.5.3-alt1
 - sisyphus_check:
   + new option: --no-check=LIST;
