@@ -19,13 +19,15 @@ sisyphus_check comes with ABSOLUTELY NO WARRANTY, see license for details.
 Usage: $PROG [options] <directory>...
 
 Valid options are:
---no-check=LIST
+  --quiet
+  --show-bad-files
+  --no-check=LIST
 EOF
 	echo "$check_env" |sed -ne 's/.*/--&/pg' |tr _ -
 	[ -n "$1" ] && exit "$1" || exit
 }
 
-TEMP=`getopt -n $PROG -o h -l no-check:,no-check-,$(echo "$check_env" |tr _ - |xargs echo |tr ' ' ','),help -- "$@"` || Usage
+TEMP=`getopt -n $PROG -o h -l quiet,show-bad-files,no-check:,no-check-,$(echo "$check_env" |tr _ - |xargs echo |tr ' ' ','),help -- "$@"` || Usage
 eval set -- "$TEMP"
 
 while :; do
@@ -44,14 +46,16 @@ while :; do
 				fi
 				eval $name=1
 			done
-			shift
 			;;
-		--no-check-) Usage-
+		--no-check-) Usage
 			;;
 		--no-check-[a-z]*)
 			arg="no_check_${1##--no-check-}"
 			eval $arg=1
-			shift
+			;;
+		-q|--quiet) quiet=-q
+			;;
+		--show-bad-files) show_bad_files=1
 			;;
 		-h|--help) Usage 0
 			;;
@@ -60,6 +64,7 @@ while :; do
 		*) Fatal "unrecognized option: $1"
 			;;
 	esac
+	shift
 done
 
 # At least one argument, please.
