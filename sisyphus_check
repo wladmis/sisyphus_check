@@ -77,6 +77,7 @@ FileError()
 
 rpm_signature=
 skip_check_gpgname=
+trust_gpg_names='security'
 
 # check changelog format
 export no_check_changelog=
@@ -163,13 +164,15 @@ check_gpgname()
 	[ -z "$no_check_gpg" -a -z "$no_check_gpgname" -a -z "$skip_check_gpgname" ] || return 0
 
 	local f="$1" && shift || return 1
-	local chlogname sed_gpg_name
+	local chlogname sed_gpg_name gpg_name
     
 	chlogname="$(printf %s "$rpm_changelogname" |sed -ne 's/^.*<\([^@]\+\)\(@\| at \).*$/\1/p')"
 	sed_gpg_name='s/^.*[[:space:]]\(from\|aka\)[^<]\+<\([^@>]\+\)@altlinux\.\(ru\|com\|net\|org\)>.*$/\2/p'
 
 	for sign in $(printf %s "$rpm_signature" |sed -ne "$sed_gpg_name" |sort -u); do
-		[ "$sign" != "security" ] || return 0
+		for gpg_name in $trust_gpg_names; do
+		    [ "$sign" != "$gpg_name" ] || return 0
+		done
 		[ "$sign" != "$chlogname" ] || return 0
 	done
 
@@ -673,13 +676,14 @@ Valid options are:
   --verbose
   --fast-check
   --show-bad-files
+  --trust-gpg-names=LIST
   --no-check=LIST
 EOF
 	printf %s\\n "$check_env" |sed -ne 's/.*/  --&/pg' |tr _ -
 	[ -n "$1" ] && exit "$1" || exit
 }
 
-TEMP=`getopt -n $PROG -o h,q,v -l help,quiet,verbose,fast-check,show-bad-files,no-check:,no-check-,$(printf %s "$check_env" |tr _ - |tr -s '[:space:]' ',') -- "$@"` || Usage
+TEMP=`getopt -n $PROG -o h,q,v -l help,quiet,verbose,fast-check,show-bad-files,trust-gpg-names:,no-check:,no-check-,$(printf %s "$check_env" |tr _ - |tr -s '[:space:]' ',') -- "$@"` || Usage
 eval set -- "$TEMP"
 
 while :; do
@@ -712,6 +716,9 @@ while :; do
 		--fast-check) fast_check=1
 			;;
 		--show-bad-files) show_bad_files=1
+			;;
+		--trust-gpg-names) shift
+			trust_gpg_names="$1"
 			;;
 		-h|--help) Usage 0
 			;;

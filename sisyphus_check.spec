@@ -1,7 +1,7 @@
 # $Id$
 
 Name: sisyphus_check
-Version: 0.7.4.1
+Version: 0.7.5
 Release: alt1
 
 Summary: package checker for Sisyphus
@@ -31,6 +31,9 @@ This package contains sisyphus_check utility.
 %_bindir/*
 
 %changelog
+* Fri Aug 13 2004 Dmitry V. Levin <ldv@altlinux.org> 0.7.5-alt1
+- New option: --trust-gpg-names.
+
 * Wed Aug 11 2004 Dmitry V. Levin <ldv@altlinux.org> 0.7.4.1-alt1
 - check_gpgname: enhanced error diagnostics.
 
