@@ -708,6 +708,7 @@ Valid options are:
   --quiet
   --verbose
   --fast-check
+  --recursive
   --show-bad-files
   --trust-gpg-names=LIST
   --no-check=LIST
