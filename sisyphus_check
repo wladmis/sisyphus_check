@@ -173,7 +173,8 @@ check_gpgname()
 		[ "$sign" != "$chlogname" ] || return 0
 	done
 
-	FileError "signature/changelog mismatch" "$f"
+	chlogname="$(printf %s "$rpm_changelogname" |sed -ne 's/^[^<]*<\([^@]\+\(@\| at \)[^>]\+\)>.*/\1/p' |tr -s '[:space:]' ' ')"
+	FileError "changelog name $chlogname not found in signature" "$f"
 	return 1
 }
 
@@ -535,7 +536,7 @@ rpm_version=%{version:shescape};
 			fi
 
 			if ! check_gpgname "$f"; then
-				Message "ERROR: you have problems with changelog and signature name"
+				Message "ERROR: you have signature/changelog mismatch"
 				rc=1
 				[ -z "$fast_check" ] || continue
 			fi
