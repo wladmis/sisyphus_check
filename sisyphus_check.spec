@@ -2,14 +2,14 @@
 
 Name: sisyphus_check
 Version: 0.7.9
-Release: alt1
+Release: alt2
 
 Summary: package checker for Sisyphus
 License: GPL
 Group: Development/Other
 BuildArch: noarch
 
-Requires: getopt, mktemp >= 1:1.3.1
+Requires: file, getopt, mktemp >= 1:1.3.1, rpm
 Conflicts: sisyphus < 0.7.2
 
 # get the source from our cvs repository
@@ -31,9 +31,10 @@ This package contains sisyphus_check utility.
 %_bindir/*
 
 %changelog
-* Thu Nov 11 2004 Dmitry V. Levin <ldv@altlinux.org> 0.7.9-alt1
+* Thu Nov 11 2004 Dmitry V. Levin <ldv@altlinux.org> 0.7.9-alt2
 - Check for file type before rpmquery.
 - New option: --recursive.
+- Updated package dependencies.
 
 * Fri Oct 22 2004 Dmitry V. Levin <ldv@altlinux.org> 0.7.8-alt1
 - Implemented support for check_gpgname() exceptions (legion).
