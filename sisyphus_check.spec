@@ -9,7 +9,7 @@ License: GPL
 Group: Development/Other
 BuildArch: noarch
 
-Requires: mktemp >= 1:1.3.1
+Requires: getopt, mktemp >= 1:1.3.1
 Conflicts: sisyphus < 0.7.2
 
 # get the source from our cvs repository
