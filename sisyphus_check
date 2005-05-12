@@ -718,7 +718,7 @@ check_dirs()
 		
 		[ -n "$filelist" ] || continue
 
-		check_files "$filelist" || rc=1
+		check_files $filelist || rc=1
 	done
 
 	return $rc
