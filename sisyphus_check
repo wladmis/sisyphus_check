@@ -1,9 +1,9 @@
 #!/bin/sh -e
 #
 # $Id$
-# Copyright (C) 2003, 2004  Stanislav Ievlev <inger@altlinux.org>,
-#                           Dmitry V. Levin <ldv@altlinux.org>,
-#                           Alexey Gladkov <legion@altlinux.org>
+# Copyright (C) 2003-2005  Stanislav Ievlev <inger@altlinux.org>,
+#                          Dmitry V. Levin <ldv@altlinux.org>,
+#                          Alexey Gladkov <legion@altlinux.org>
 # 
 # The sisyphus_check utility.
 #
@@ -82,6 +82,7 @@ trust_gpg_names='security incominger'
 no_gpgname_packagers='kernel@packages.altlinux.org'
 package_type=
 recurse_subdir=
+files=
 
 # check changelog format
 export no_check_changelog=
@@ -177,7 +178,7 @@ check_gpgname()
 
 	local f="$1" && shift || return 1
 	local chlogname sed_gpg_name gpg_name
-    
+
 	chlogname="$(printf %s "$rpm_changelogname" |
 		sed -ne 's/^.*<\([^@]\+\)\(@\| at \).*$/\1/p' |
 		tr '[:upper:]' '[:lower:]')"
@@ -268,6 +269,14 @@ check_nvr()
 		rc=1
 	fi
 
+	local arch="$rpm_arch"
+	[ "$package_type" != src ] || arch="src"
+	local expected="$rpm_name-$rpm_version-$rpm_release.$arch.rpm"
+	if [ "$expected" != "${f##*/}" ]; then
+		FileError "invalid FILENAME: $expected expected" "$f"
+		rc=1
+	fi
+	
 	return $rc
 }
 
@@ -360,7 +369,7 @@ check_content()
 	local rc=0
 	local bad
 
-	if bad="$(printf %s "$rpm_filelist" |egrep -e '^(/usr(/X11R6)?)?/lib/lib[^/]+\.la$')"; then
+	if bad="$(printf %s "$rpm_filelist" |egrep -e '^(/usr(/X11R6)?)?/lib(64)?/lib[^/]+\.la$')"; then
 		FileError "forbidden .la files: $(printf %s "$bad" |tr -s '[:space:]' ' ')" "$f"
 		rc=1
 	fi
@@ -472,11 +481,13 @@ exit_handler()
 
 init_check()
 {
+	[ -z "$fs_list" ] || return 0
+
 	unset current_time packager_pattern
 	local fs_filelist
 
-	trap exit_handler HUP PIPE INT QUIT TERM EXIT
 	fs_list="$(mktemp -t "$PROG.XXXXXXXXXX")"
+	trap exit_handler HUP PIPE INT QUIT TERM EXIT
 
 	fs_filelist="$(LC_ALL=C rpmquery -l filesystem)" || Fatal "rpmquery filesystem failed."
 	printf %s "$fs_filelist" |LC_COLLATE=C sort -u >"$fs_list" || Fatal "sort failed."
@@ -485,60 +496,44 @@ init_check()
 }
 
 fast_check=
+
 # cummulative check
-check()
+check_files()
 {
-	local rc=0
-
-	# quick arg check.
-	local d
-	for d in "$@"; do
-		[ -d "$d" ] || { FileError "$d: not a directory"; rc=1; continue; }
-	done
-	[ $rc = 0 ] || return $rc
-
 	init_check || Fatal "init_check failed."
 
-	for d in "$@"; do
-		[ -d "$d" ] || { FileError "$d: not a directory"; rc=1; continue; }
-		local filelist f
-		if [ -n "$recurse_subdir" ]; then
-			filelist="$(find "$d" -mindepth 1 -not -type d)" || { rc=1; continue; }
-		else
-			filelist="$(find "$d" -mindepth 1 -maxdepth 1)" || { rc=1; continue; }
+	local f rc=0
+	for f in "$@"; do
+		if [ ! -f "$f" ]; then
+			FileError "not a regular file" "$f"
+			rc=1
+			continue
 		fi
-		
-		for f in $filelist; do
-			if [ ! -f "$f" ]; then
-				FileError "not a regular file" "$f"
-				rc=1
-				continue
-			fi
-
-			package_type="$(file -b -- "$f")" || { rc=1; continue; }
-			if [ -z "${package_type##RPM v? src *}" ]; then
-				package_type=src
-			elif [ -z "${package_type##RPM v? bin *}" ]; then
-				package_type=bin
-			else
-				FileError "unexpected file type: $(printf %s "$package_type" |tr -s '[:space:]' ' ')" "$f"
-				rc=1
-				continue
-			fi
-
-			local rpm_arch rpm_buildhost rpm_buildtime
-			local rpm_changelogname rpm_changelogtext
-			local rpm_changelogtime rpm_description
-			local rpm_distribution rpm_group rpm_license rpm_name
-			local rpm_packager rpm_platform rpm_release rpm_serial
-			local rpm_size rpm_sourcerpm rpm_summary rpm_url
-			local rpm_vendor rpm_version
-
-			local rpm_deps rpm_requires
-			local rpm_filelist rpm_long_filelist
-			local values
-
-			if ! values="$(LC_ALL=C rpmquery -p --qf='
+	
+		package_type="$(file -b -- "$f")" || { rc=1; continue; }
+		if [ -z "${package_type##RPM v? src *}" ]; then
+			package_type=src
+		elif [ -z "${package_type##RPM v? bin *}" ]; then
+			package_type=bin
+		else
+			FileError "unexpected file type: $(printf %s "$package_type" |tr -s '[:space:]' ' ')" "$f"
+			rc=1
+			continue
+		fi
+	
+		local rpm_arch rpm_buildhost rpm_buildtime
+		local rpm_changelogname rpm_changelogtext
+		local rpm_changelogtime rpm_description
+		local rpm_distribution rpm_group rpm_license rpm_name
+		local rpm_packager rpm_platform rpm_release rpm_serial
+		local rpm_size rpm_sourcerpm rpm_summary rpm_url
+		local rpm_vendor rpm_version
+	
+		local rpm_deps rpm_requires
+		local rpm_filelist rpm_long_filelist
+		local values
+	
+		if ! values="$(LC_ALL=C rpmquery -p --qf='
 rpm_arch=%{arch:shescape};
 rpm_buildhost=%{buildhost:shescape};
 rpm_buildtime=%{buildtime:shescape};
@@ -561,141 +556,169 @@ rpm_summary=%{summary:shescape};
 rpm_url=%{url:shescape};
 rpm_vendor=%{vendor:shescape};
 rpm_version=%{version:shescape};
-				' -- $f)"; then
-				FileError "rpmquery failed" "$f"
-				rc=1
-				continue
-			fi
-			eval "$values"
-			unset values
+			' -- $f)"; then
+			FileError "rpmquery failed" "$f"
+			rc=1
+			continue
+		fi
+		eval "$values"
+		unset values
+	
+		if ! check_changelog "$f"; then
+			Message "ERROR: you have problems with changelog format"
+			rc=1
+			[ -z "$fast_check" ] || continue
+		fi
+	
+		if ! check_gpg "$f"; then
+			Message "ERROR: you have problems with package signatures"
+			skip_check_gpgname=1
+			rc=1
+			[ -z "$fast_check" ] || continue
+		fi
+	
+		if ! check_gpgname "$f"; then
+			Message "ERROR: you have signature/changelog mismatch"
+			rc=1
+			[ -z "$fast_check" ] || continue
+		fi
+	
+		if ! rpm_deps="$(LC_ALL=C rpmquery -p --requires --provides --obsoletes --conflicts "$f")"; then
+			FileError "rpmquery failed" "$f"
+			rc=1
+			continue
+		fi
+	
+		if ! rpm_requires="$(LC_ALL=C rpmquery -p --qf '[%{REQUIRENAME}\n]' "$f")"; then
+			FileError "rpmquery failed" "$f"
+			rc=1
+			continue
+		fi
+	
+		if ! rpm_filelist="$(LC_ALL=C rpmquery -pl "$f")"; then
+			FileError "rpmquery failed" "$f"
+			rc=1
+			continue
+		fi
+	
+		if ! rpm_long_filelist="$(LC_ALL=C rpmquery -plv "$f")"; then
+			FileError "rpmquery failed" "$f"
+			rc=1
+			continue
+		fi
+	
+		rpm_filelist="$(printf %s "$rpm_filelist" |LC_COLLATE=C sort -u)" || Fatal "sort failed."
+		rpm_long_filelist="$(printf %s "$rpm_long_filelist" |LC_COLLATE=C sort -u)" || Fatal "sort failed."
+	
+		if ! check_buildhost "$f"; then
+			Message "ERROR: you have problems with buildhost name"
+			rc=1
+			[ -z "$fast_check" ] || continue
+		fi
+	
+		if ! check_buildtime "$f"; then
+			Message "ERROR: you have problems with buildtime"
+			rc=1
+			[ -z "$fast_check" ] || continue
+		fi
+	
+		if ! check_packager "$f"; then
+			Message "ERROR: you have problems with packager name"
+			rc=1
+			[ -z "$fast_check" ] || continue
+		fi
+	
+		if ! check_printable "$f"; then
+			Message "ERROR: you have problems with package information"
+			rc=1
+			[ -z "$fast_check" ] || continue
+		fi
+	
+		if ! check_summary "$f"; then
+			Message "ERROR: you have problems with package summary"
+			rc=1
+			[ -z "$fast_check" ] || continue
+		fi
+	
+		if ! check_description "$f"; then
+			Message "ERROR: you have problems with package description"
+			rc=1
+			[ -z "$fast_check" ] || continue
+		fi
+	
+		if ! check_group "$f"; then
+			Message "ERROR: you have problems with package group"
+			rc=1
+			[ -z "$fast_check" ] || continue
+		fi
+	
+		if ! check_nvr "$f"; then
+			Message "ERROR: you have problems with package name-version-release format"
+			rc=1
+			[ -z "$fast_check" ] || continue
+		fi
+	
+	
+		if ! check_deps "$f"; then
+			Message "ERROR: you have problems with package dependencies"
+			rc=1
+			[ -z "$fast_check" ] || continue
+		fi
+	
+		if ! check_content "$f"; then
+			Message "ERROR: you have problems with package content"
+			rc=1
+			[ -z "$fast_check" ] || continue
+		fi
+	
+		# More expensive checks go last.
+	
+		if ! check_fhs "$f"; then
+			Message "ERROR: you have problems with standards"
+			rc=1
+			[ -z "$fast_check" ] || continue
+		fi
+	
+		if ! check_perms "$f"; then
+			Message "ERROR: you have problems with file permissions"
+			rc=1
+			[ -z "$fast_check" ] || continue
+		fi
+	
+		if ! check_intersects "$f"; then
+			Message "ERROR: you have package intersections"
+			rc=1
+			[ -z "$fast_check" ] || continue
+		fi
+	done
 
-			if ! check_changelog "$f"; then
-				Message "ERROR: you have problems with changelog format"
-				rc=1
-				[ -z "$fast_check" ] || continue
-			fi
-
-			if ! check_gpg "$f"; then
-				Message "ERROR: you have problems with package signatures"
-				skip_check_gpgname=1
-				rc=1
-				[ -z "$fast_check" ] || continue
-			fi
-
-			if ! check_gpgname "$f"; then
-				Message "ERROR: you have signature/changelog mismatch"
-				rc=1
-				[ -z "$fast_check" ] || continue
-			fi
-
-			if ! rpm_deps="$(LC_ALL=C rpmquery -p --requires --provides --obsoletes --conflicts "$f")"; then
-				FileError "rpmquery failed" "$f"
-				rc=1
-				continue
-			fi
-
-			if ! rpm_requires="$(LC_ALL=C rpmquery -p --qf '[%{REQUIRENAME}\n]' "$f")"; then
-				FileError "rpmquery failed" "$f"
-				rc=1
-				continue
-			fi
-
-			if ! rpm_filelist="$(LC_ALL=C rpmquery -pl "$f")"; then
-				FileError "rpmquery failed" "$f"
-				rc=1
-				continue
-			fi
-
-			if ! rpm_long_filelist="$(LC_ALL=C rpmquery -plv "$f")"; then
-				FileError "rpmquery failed" "$f"
-				rc=1
-				continue
-			fi
-
-			rpm_filelist="$(printf %s "$rpm_filelist" |LC_COLLATE=C sort -u)" || Fatal "sort failed."
-			rpm_long_filelist="$(printf %s "$rpm_long_filelist" |LC_COLLATE=C sort -u)" || Fatal "sort failed."
-
-			if ! check_buildhost "$f"; then
-				Message "ERROR: you have problems with buildhost name"
-				rc=1
-				[ -z "$fast_check" ] || continue
-			fi
-
-			if ! check_buildtime "$f"; then
-				Message "ERROR: you have problems with buildtime"
-				rc=1
-				[ -z "$fast_check" ] || continue
-			fi
-
-			if ! check_packager "$f"; then
-				Message "ERROR: you have problems with packager name"
-				rc=1
-				[ -z "$fast_check" ] || continue
-			fi
-
-			if ! check_printable "$f"; then
-				Message "ERROR: you have problems with package information"
-				rc=1
-				[ -z "$fast_check" ] || continue
-			fi
-
-			if ! check_summary "$f"; then
-				Message "ERROR: you have problems with package summary"
-				rc=1
-				[ -z "$fast_check" ] || continue
-			fi
-
-			if ! check_description "$f"; then
-				Message "ERROR: you have problems with package description"
-				rc=1
-				[ -z "$fast_check" ] || continue
-			fi
-
-			if ! check_group "$f"; then
-				Message "ERROR: you have problems with package group"
-				rc=1
-				[ -z "$fast_check" ] || continue
-			fi
-
-			if ! check_nvr "$f"; then
-				Message "ERROR: you have problems with package name-version-release format"
-				rc=1
-				[ -z "$fast_check" ] || continue
-			fi
+	return $rc
+}
 
 
-			if ! check_deps "$f"; then
-				Message "ERROR: you have problems with package dependencies"
-				rc=1
-				[ -z "$fast_check" ] || continue
-			fi
+check_dirs()
+{
+	local rc=0
 
-			if ! check_content "$f"; then
-				Message "ERROR: you have problems with package content"
-				rc=1
-				[ -z "$fast_check" ] || continue
-			fi
+	# quick arg check.
+	local d
+	for d in "$@"; do
+		[ -d "$d" ] || { FileError "$d: not a directory"; rc=1; continue; }
+	done
+	[ $rc = 0 ] || return $rc
 
-			# More expensive checks go last.
+	for d in "$@"; do
+		[ -d "$d" ] || { FileError "$d: not a directory"; rc=1; continue; }
+		local filelist f
+		if [ -n "$recurse_subdir" ]; then
+			filelist="$(find "$d" -mindepth 1 -not -type d)" || { rc=1; continue; }
+		else
+			filelist="$(find "$d" -mindepth 1 -maxdepth 1)" || { rc=1; continue; }
+		fi
+		
+		[ -n "$filelist" ] || continue
 
-			if ! check_fhs "$f"; then
-				Message "ERROR: you have problems with standards"
-				rc=1
-				[ -z "$fast_check" ] || continue
-			fi
-
-			if ! check_perms "$f"; then
-				Message "ERROR: you have problems with file permissions"
-				rc=1
-				[ -z "$fast_check" ] || continue
-			fi
-
-			if ! check_intersects "$f"; then
-				Message "ERROR: you have package intersections"
-				rc=1
-				[ -z "$fast_check" ] || continue
-			fi
-		done
+		check_files "$filelist" || rc=1
 	done
 
 	return $rc
@@ -719,6 +742,8 @@ Valid options are:
   --quiet
   --verbose
   --fast-check
+  --files
+  --directories
   --recursive
   --show-bad-files
   --trust-gpg-names=LIST
@@ -728,7 +753,7 @@ EOF
 	[ -n "$1" ] && exit "$1" || exit
 }
 
-TEMP=`getopt -n $PROG -o h,q,v -l help,quiet,verbose,fast-check,show-bad-files,recursive,trust-gpg-names:,no-check:,no-check-,$(printf %s "$check_env" |tr _ - |tr -s '[:space:]' ',') -- "$@"` || Usage
+TEMP=`getopt -n $PROG -o h,q,v -l help,quiet,verbose,fast-check,files,directories,show-bad-files,recursive,trust-gpg-names:,no-check:,no-check-,$(printf %s "$check_env" |tr _ - |tr -s '[:space:]' ',') -- "$@"` || Usage
 eval set -- "$TEMP"
 
 while :; do
@@ -760,6 +785,10 @@ while :; do
 			;;
 		--fast-check) fast_check=1
 			;;
+		--files) files=1
+			;;
+		--directories) files=
+			;;
 		--show-bad-files) show_bad_files=1
 			;;
 		--recursive) recurse_subdir=1
@@ -783,4 +812,8 @@ if ! [ "$#" -ge 1 ]; then
 	Usage
 fi
 
-check "$@"
+if [ -n "$files" ]; then
+	check_files "$@"
+else
+	check_dirs "$@"
+fi
