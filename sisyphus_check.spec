@@ -1,7 +1,7 @@
 # $Id$
 
 Name: sisyphus_check
-Version: 0.7.11
+Version: 0.7.12
 Release: alt1
 
 Summary: package checker for Sisyphus
@@ -31,6 +31,14 @@ This package contains sisyphus_check utility.
 %_bindir/*
 
 %changelog
+* Thu May 12 2005 Dmitry V. Levin <ldv@altlinux.org> 0.7.12-alt1
+- check_nvr: Add check for filename.
+- check_content: Adjust .la-files check for 64bit platforms.
+- New options:
+  --files: Consider arguments as file names (closes #5652).
+  --directories: Consider arguments as directory names;
+  this is default mode, for compatibility with previous releases.
+
 * Wed Dec 29 2004 Dmitry V. Levin <ldv@altlinux.org> 0.7.11-alt1
 - check_fhs: allow /usr/libexec/.
 - check_changelog, check_buildtime: enhanced wording.
