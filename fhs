@@ -6,6 +6,7 @@ SysVinit		^/dev/initctl$
 acct			^/var/account($|/)
 anonftp			^/var/ftp($|/)
 apache-common		^/var/www($|/)
+arm-palmos-*		^/usr/arm-palmos($|/)
 avr-*			^/usr/avr($|/)
 chrooted-resolv		^/var/resolv($|/)
 dev			^/dev($|/)
@@ -14,5 +15,6 @@ i386-mingw32msvc-*	^/usr/i386-mingw32msvc($|/)
 m68k-palmos-*		^/usr/m68k-palmos($|/)
 oracle-preinstall	^/opt/oracle($|/)
 pam[02]_mktemp		^/tmp/\.private$
+prc-tools-common	^/opt/palmdev$
 rootfiles		^/root($|/)
 udev			^/dev($|/)
