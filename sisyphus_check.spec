@@ -1,7 +1,7 @@
 # $Id$
 
 Name: sisyphus_check
-Version: 0.7.12
+Version: 0.7.13
 Release: alt1
 
 Summary: package checker for Sisyphus
@@ -31,6 +31,9 @@ This package contains sisyphus_check utility.
 %_bindir/*
 
 %changelog
+* Mon May 16 2005 Dmitry V. Levin <ldv@altlinux.org> 0.7.13-alt1
+- fhs: added arm-palmos-* and prc-tools-common (raorn).
+
 * Thu May 12 2005 Dmitry V. Levin <ldv@altlinux.org> 0.7.12-alt1
 - check_nvr: Add check for filename.
 - check_content: Adjust .la-files check for 64bit platforms.
