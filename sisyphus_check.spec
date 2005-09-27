@@ -1,7 +1,7 @@
 # $Id$
 
 Name: sisyphus_check
-Version: 0.7.13
+Version: 0.7.14
 Release: alt1
 
 Summary: package checker for Sisyphus
@@ -22,8 +22,8 @@ This package contains sisyphus_check utility.
 %setup -q
 
 %install
-%__install -pD -m644 fhs $RPM_BUILD_ROOT%_sysconfdir/%name/fhs
-%__install -pD -m755 %name $RPM_BUILD_ROOT%_bindir/%name
+%__install -pD -m644 fhs %buildroot%_sysconfdir/%name/fhs
+%__install -pD -m755 %name %buildroot%_bindir/%name
 
 %files
 %dir %_sysconfdir/%name
@@ -31,6 +31,9 @@ This package contains sisyphus_check utility.
 %_bindir/*
 
 %changelog
+* Wed Sep 28 2005 Dmitry V. Levin <ldv@altlinux.org> 0.7.14-alt1
+- check_locales: New check (legion).
+
 * Mon May 16 2005 Dmitry V. Levin <ldv@altlinux.org> 0.7.13-alt1
 - fhs: added arm-palmos-* and prc-tools-common (raorn).
 
