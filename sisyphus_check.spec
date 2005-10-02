@@ -1,7 +1,7 @@
 # $Id$
 
 Name: sisyphus_check
-Version: 0.7.14
+Version: 0.7.15
 Release: alt1
 
 Summary: package checker for Sisyphus
@@ -31,6 +31,9 @@ This package contains sisyphus_check utility.
 %_bindir/*
 
 %changelog
+* Sun Oct 02 2005 Dmitry V. Levin <ldv@altlinux.org> 0.7.15-alt1
+- check_locales: Fix bugs introduced in previous release.
+
 * Wed Sep 28 2005 Dmitry V. Levin <ldv@altlinux.org> 0.7.14-alt1
 - check_locales: New check (legion).
 
