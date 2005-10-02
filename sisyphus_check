@@ -452,11 +452,12 @@ check_intersects()
 {
 	[ -z "$no_check_intersects" ] || return 0
 	local f="$1" && shift || return 1
-	local rc=0
-	local text
 
 	# Do not check filesystem package.
 	[ "$rpm_name" != filesystem ] || return 0
+
+	local rc=0
+	local text
 
 	if ! text="$(printf %s\\n "$rpm_filelist" |LC_COLLATE=C comm -12 -- "$fs_list" -)"; then
 		FileError "comm failed" "$f"
@@ -477,11 +478,13 @@ check_locales()
 {
 	[ -z "$no_check_locales" ] || return 0
 	local f="$1" && shift || return 1
-	[ "$f" = "${f#glibc-locales-}" ] || return 0
+
+	# Do not check glibc-locales package.
+	[ "$rpm_name" != glibc-locales ] || return 0
 
 	local locales
-	if locales="$(printf %s "$rpm_filelist" | grep -qs '^/usr/share/locale\(/[^/]\+\)\?$')"; then 
-		FileError "files may belong to glibc-locales only: $(printf %s "$locales")" "$f"
+	if locales="$(printf %s "$rpm_filelist" |grep '^/usr/share/locale\(/[^/]\+\)\?$')"; then 
+		FileError "files may belong to glibc-locales only: $(printf %s "$locales" |tr -s '[:space:]' ' ')" "$f"
 		return 1
 	fi
 }
