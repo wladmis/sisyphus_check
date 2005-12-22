@@ -370,11 +370,6 @@ check_content()
 	local rc=0
 	local bad
 
-	if bad="$(printf %s "$rpm_filelist" |egrep -e '^(/usr(/X11R6)?)?/lib(64)?/lib[^/]+\.la$')"; then
-		FileError "forbidden .la files: $(printf %s "$bad" |tr -s '[:space:]' ' ')" "$f"
-		rc=1
-	fi
-
 	if [ "$rpm_name" != rpm ] && bad="$(printf %s "$rpm_filelist" |egrep -e '^/etc/rpm(/macros\.d)$')"; then
 		FileError "intersections with rpm: $(printf %s "$bad" |tr -s '[:space:]' ' ')" "$f"
 		rc=1
@@ -382,6 +377,23 @@ check_content()
 
 	if [ "$rpm_name" != control ] && bad="$(printf %s "$rpm_filelist" |egrep -e '^/etc/control\.d(/facilities)?$')"; then
 		FileError "intersections with control: $(printf %s "$bad" |tr -s '[:space:]' ' ')" "$f"
+		rc=1
+	fi
+
+	return $rc
+}
+
+# check files intersections with known packages
+export no_check_libtool=1
+check_libtool()
+{
+	[ -z "$no_check_libtool" ] || return 0
+	local f="$1" && shift || return 1
+	local rc=0
+	local bad
+
+	if bad="$(printf %s "$rpm_filelist" |egrep -e '^(/usr(/X11R6)?)?/lib(64)?/lib[^/]+\.la$')"; then
+		FileError "forbidden libtool files: $(printf %s "$bad" |tr -s '[:space:]' ' ')" "$f"
 		rc=1
 	fi
 
@@ -690,6 +702,12 @@ rpm_version=%{version:shescape};
 			[ -z "$fast_check" ] || continue
 		fi
 	
+		if ! check_libtool "$f"; then
+			Message "ERROR: you have problems with libtool files"
+			rc=1
+			[ -z "$fast_check" ] || continue
+		fi
+	
 		# More expensive checks go last.
 	
 		if ! check_fhs "$f"; then
@@ -749,11 +767,15 @@ check_dirs()
 	return $rc
 }
 
-check_env="$(printenv |sed -ne 's/^\(no_check_[a-z]\+\)=.*/\1/pg' |sort -u)"
-
-Usage()
+show_usage()
 {
-	[ "$1" = 0 ] || exec >&2
+	[ -z "$*" ] || Info "$*"
+	echo "Try \`$PROG --help' for more information." >&2
+	exit 1
+}
+
+show_help()
+{
 	cat <<EOF
 
 sisyphus_check - check packages for acceptability for Sisyphus.
@@ -772,33 +794,43 @@ Valid options are:
   --recursive
   --show-bad-files
   --trust-gpg-names=LIST
-  --no-check=LIST
+  --[no-]check=LIST
 EOF
-	printf %s\\n "$check_env" |sed -ne 's/.*/  --&/pg' |tr _ -
-	[ -n "$1" ] && exit "$1" || exit
+	printf %s\\n "$check_env" |sed -ne 's/.*/  --&/pg' |tr _ - |sed -e 's/--no-/--[no-]/'
+	exit
 }
 
-TEMP=`getopt -n $PROG -o h,q,v -l help,quiet,verbose,fast-check,files,directories,show-bad-files,recursive,trust-gpg-names:,no-check:,no-check-,$(printf %s "$check_env" |tr _ - |tr -s '[:space:]' ',') -- "$@"` || Usage
+check_env="$(printenv |sed -ne 's/^\(no_check_[a-z]\+\)=.*/\1/pg' |sort -u)"
+getopt_check="$(printf %s "$check_env" |sed -e 's/^no_//' |tr _ - |tr -s '[:space:]' ',')"
+getopt_no_check="$(printf %s "$check_env" |tr _ - |tr -s '[:space:]' ',')"
+TEMP=`getopt -n $PROG -o h,q,v -l help,quiet,verbose,fast-check,files,directories,show-bad-files,recursive,trust-gpg-names:,check:,no-check:,check-,no-check-,$getopt_check,$getopt_no_check -- "$@"` || show_usage
 eval set -- "$TEMP"
 
 while :; do
 	case "$1" in
-		--no-check)
+		--check|--no-check)
+			mode="$1"
 			shift
+			check_value=
+			[ -n "${mode##--no-check*}" ] || check_value=1
 			if [ -n "$(printf %s "$1" |tr -d '[:alpha:],[:space:]')" ]; then
-				Info "--no-check: invalid argument: $1"
-				Usage
+				Info "$mode: invalid argument: $1"
+				show_usage
 			fi
 			for arg in `printf %s "$1" |tr , ' '`; do
 				name="no_check_$arg"
 				if ! echo "$check_env" |grep -qs "^$name\$"; then
-					Info "--no-check: invalid argument: $arg"
-					Usage
+					Info "$mode: invalid argument: $arg"
+					show_usage
 				fi
-				eval $name=1
+				eval $name=$check_value
 			done
 			;;
-		--no-check-) Usage
+		--check-|--no-check-) show_usage
+			;;
+		--check-[a-z]*)
+			arg="no_check_${1##--check-}"
+			eval $arg=
 			;;
 		--no-check-[a-z]*)
 			arg="no_check_${1##--no-check-}"
@@ -821,7 +853,7 @@ while :; do
 		--trust-gpg-names) shift
 			trust_gpg_names="$(printf %s "$1" |tr -s :, ' ')"
 			;;
-		-h|--help) Usage 0
+		-h|--help) show_help
 			;;
 		--) shift; break
 			;;
@@ -834,7 +866,7 @@ done
 # At least one argument, please.
 if ! [ "$#" -ge 1 ]; then
 	Info "at least one argument is required."
-	Usage
+	show_usage
 fi
 
 if [ -n "$files" ]; then
