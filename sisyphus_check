@@ -238,7 +238,7 @@ check_printable()
 	local f="$1" && shift || return 1
 	local text
 
-	text="$rpm_name $rpm_version $rpm_release $rpm_group $rpm_packager $rpm_license $rpm_summary $rpm_description"
+	text="$rpm_name $rpm_version $rpm_release $rpm_group $rpm_packager $rpm_license $rpm_summary $rpm_description $rpm_changelogname $rpm_changelogtext"
 
 	if [ -n "$(printf %s "$text" |LC_ALL=C tr -d '[:print:][:space:]')" ]; then
 		FileError "unprintable package information: $(printf %s "$text" |LC_ALL=C tr -d '[:print:][:space:]')" "$f"
