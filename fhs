@@ -1,5 +1,3 @@
-# $Id$
-
 # pkgname_pattern	pathname_regexp
 MAKEDEV			^/dev/MAKEDEV$
 SysVinit		^/dev/initctl$

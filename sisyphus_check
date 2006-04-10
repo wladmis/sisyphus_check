@@ -1,7 +1,6 @@
 #!/bin/sh -e
 #
-# $Id$
-# Copyright (C) 2003-2005  Stanislav Ievlev <inger@altlinux.org>,
+# Copyright (C) 2003-2006  Stanislav Ievlev <inger@altlinux.org>,
 #                          Dmitry V. Levin <ldv@altlinux.org>,
 #                          Alexey Gladkov <legion@altlinux.org>
 # 

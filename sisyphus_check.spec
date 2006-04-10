@@ -1,5 +1,3 @@
-# $Id$
-
 Name: sisyphus_check
 Version: 0.7.16
 Release: alt1
