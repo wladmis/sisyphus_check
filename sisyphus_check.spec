@@ -1,5 +1,5 @@
 Name: sisyphus_check
-Version: 0.7.16
+Version: 0.7.17
 Release: alt1
 
 Summary: package checker for Sisyphus
@@ -29,6 +29,9 @@ This package contains sisyphus_check utility.
 %_bindir/*
 
 %changelog
+* Mon Apr 10 2006 Dmitry V. Levin <ldv@altlinux.org> 0.7.17-alt1
+- check_fhs: Added /var/games (FHS-2.3, 5.7.1).
+
 * Thu Dec 22 2005 Dmitry V. Levin <ldv@altlinux.org> 0.7.16-alt1
 - check_printable: Added check for changelogs (#7626).
 - Moved libtool la-files check to separate check_libtool() function
