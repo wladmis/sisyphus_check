@@ -1,1 +1,2 @@
-tar: .
+spec: sisyphus_check/sisyphus_check.spec
+tar: sisyphus_check

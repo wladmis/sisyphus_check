@@ -10,8 +10,8 @@ BuildArch: noarch
 Requires: file, getopt, mktemp >= 1:1.3.1, rpm
 Conflicts: sisyphus < 0.7.2
 
-# get the source from our cvs repository
-Source: %name-%version.tar.bz2
+# get the source from our git repository
+Source: %name-%version.tar
 
 %description
 This package contains sisyphus_check utility.
@@ -20,8 +20,8 @@ This package contains sisyphus_check utility.
 %setup -q
 
 %install
-%__install -pD -m644 fhs %buildroot%_sysconfdir/%name/fhs
-%__install -pD -m755 %name %buildroot%_bindir/%name
+install -pD -m644 fhs %buildroot%_sysconfdir/%name/fhs
+install -pD -m755 %name %buildroot%_bindir/%name
 
 %files
 %dir %_sysconfdir/%name
