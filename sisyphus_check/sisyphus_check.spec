@@ -1,5 +1,5 @@
 Name: sisyphus_check
-Version: 0.7.17
+Version: 0.7.18
 Release: alt1
 
 Summary: package checker for Sisyphus
@@ -29,6 +29,11 @@ install -pD -m755 %name %buildroot%_bindir/%name
 %_bindir/*
 
 %changelog
+* Mon Jan 22 2007 Dmitry V. Levin <ldv@altlinux.org> 0.7.18-alt1
+- check_files:
+  Check file type manually, do not rely on file(1) utility.
+  Perform quick sanity check prior to other checks.
+
 * Mon Apr 10 2006 Dmitry V. Levin <ldv@altlinux.org> 0.7.17-alt1
 - check_fhs: Added /var/games (FHS-2.3, 5.7.1).
 

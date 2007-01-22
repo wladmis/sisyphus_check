@@ -3,19 +3,19 @@
 # Copyright (C) 2003-2006  Stanislav Ievlev <inger@altlinux.org>,
 #                          Dmitry V. Levin <ldv@altlinux.org>,
 #                          Alexey Gladkov <legion@altlinux.org>
-# 
+#
 # The sisyphus_check utility.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
@@ -136,7 +136,7 @@ check_gpg()
 	local f="$1" && shift || return 1
 	local bads=
 
-	if [ -z "$rpm_siggpg" ]; then 
+	if [ -z "$rpm_siggpg" ]; then
 		FileError "signature not found" "$f"
 		return 1
 	fi
@@ -276,7 +276,7 @@ check_nvr()
 		FileError "invalid FILENAME: $expected expected" "$f"
 		rc=1
 	fi
-	
+
 	return $rc
 }
 
@@ -494,7 +494,7 @@ check_locales()
 	[ "$rpm_name" != glibc-locales ] || return 0
 
 	local locales
-	if locales="$(printf %s "$rpm_filelist" |grep '^/usr/share/locale\(/[^/]\+\)\?$')"; then 
+	if locales="$(printf %s "$rpm_filelist" |grep '^/usr/share/locale\(/[^/]\+\)\?$')"; then
 		FileError "files may belong to glibc-locales only: $(printf %s "$locales" |tr -s '[:space:]' ' ')" "$f"
 		return 1
 	fi
@@ -525,6 +525,26 @@ init_check()
 	packager_pattern='<[^@]+(@| at )(packages\.)?altlinux(\.| dot )(com|net|org|ru)>'
 }
 
+get_package_type()
+{
+	local file header
+
+	package_type=
+	file="$1" && shift
+	header="$(od -A n -N 8 -t x1 -- "$file")" || return
+	case "$header" in
+	' ed ab ee db '??' '??' 00 00')
+		package_type=bin
+		return 0
+		;;
+	' ed ab ee db '??' '??' 00 01')
+		package_type=src
+		return 0
+		;;
+	esac
+	return 1;
+}
+
 fast_check=
 
 # cummulative check
@@ -539,30 +559,23 @@ check_files()
 			rc=1
 			continue
 		fi
-	
-		package_type="$(file -b -- "$f")" || { rc=1; continue; }
-		if [ -z "${package_type##RPM v? src *}" ]; then
-			package_type=src
-		elif [ -z "${package_type##RPM v? bin *}" ]; then
-			package_type=bin
-		else
-			FileError "unexpected file type: $(printf %s "$package_type" |tr -s '[:space:]' ' ')" "$f"
+
+		if ! get_package_type "$f"; then
+			FileError "unexpected file type" "$f"
 			rc=1
 			continue
 		fi
-	
-		local rpm_arch rpm_buildhost rpm_buildtime
-		local rpm_changelogname rpm_changelogtext
-		local rpm_changelogtime rpm_description
-		local rpm_distribution rpm_group rpm_license rpm_name
-		local rpm_packager rpm_platform rpm_release rpm_serial
-		local rpm_size rpm_sourcerpm rpm_summary rpm_url
-		local rpm_vendor rpm_version
-	
-		local rpm_deps rpm_requires
-		local rpm_filelist rpm_long_filelist
+
 		local values
-	
+
+		if ! values="$(LC_ALL=C rpmquery -p --qf= -- "$f" 2>&1)" ||
+		   [ -n "$values" ]; then
+			printf >&2 %s\\n "$values"
+			FileError "rpmquery failed" "$f"
+			rc=1
+			continue
+		fi
+
 		if ! values="$(LC_ALL=C rpmquery -p --qf='
 rpm_arch=%{arch:shescape};
 rpm_buildhost=%{buildhost:shescape};
@@ -586,141 +599,152 @@ rpm_summary=%{summary:shescape};
 rpm_url=%{url:shescape};
 rpm_vendor=%{vendor:shescape};
 rpm_version=%{version:shescape};
-			' -- $f)"; then
+			' -- "$f")"; then
 			FileError "rpmquery failed" "$f"
 			rc=1
 			continue
 		fi
+
+		local rpm_arch rpm_buildhost rpm_buildtime
+		local rpm_changelogname rpm_changelogtext
+		local rpm_changelogtime rpm_description
+		local rpm_distribution rpm_group rpm_license rpm_name
+		local rpm_packager rpm_platform rpm_release rpm_serial
+		local rpm_size rpm_sourcerpm rpm_summary rpm_url
+		local rpm_vendor rpm_version
+
 		eval "$values"
 		unset values
-	
+
 		if ! check_changelog "$f"; then
 			Message "ERROR: you have problems with changelog format"
 			rc=1
 			[ -z "$fast_check" ] || continue
 		fi
-	
+
 		if ! check_gpg "$f"; then
 			Message "ERROR: you have problems with package signatures"
 			skip_check_gpgname=1
 			rc=1
 			[ -z "$fast_check" ] || continue
 		fi
-	
+
 		if ! check_gpgname "$f"; then
 			Message "ERROR: you have signature/changelog mismatch"
 			rc=1
 			[ -z "$fast_check" ] || continue
 		fi
-	
+
+		local rpm_deps rpm_requires
+		local rpm_filelist rpm_long_filelist
+
 		if ! rpm_deps="$(LC_ALL=C rpmquery -p --requires --provides --obsoletes --conflicts "$f")"; then
 			FileError "rpmquery failed" "$f"
 			rc=1
 			continue
 		fi
-	
+
 		if ! rpm_requires="$(LC_ALL=C rpmquery -p --qf '[%{REQUIRENAME}\n]' "$f")"; then
 			FileError "rpmquery failed" "$f"
 			rc=1
 			continue
 		fi
-	
+
 		if ! rpm_filelist="$(LC_ALL=C rpmquery -pl "$f")"; then
 			FileError "rpmquery failed" "$f"
 			rc=1
 			continue
 		fi
-	
+
 		if ! rpm_long_filelist="$(LC_ALL=C rpmquery -plv "$f")"; then
 			FileError "rpmquery failed" "$f"
 			rc=1
 			continue
 		fi
-	
+
 		rpm_filelist="$(printf %s "$rpm_filelist" |LC_COLLATE=C sort -u)" || Fatal "sort failed."
 		rpm_long_filelist="$(printf %s "$rpm_long_filelist" |LC_COLLATE=C sort -u)" || Fatal "sort failed."
-	
+
 		if ! check_buildhost "$f"; then
 			Message "ERROR: you have problems with buildhost name"
 			rc=1
 			[ -z "$fast_check" ] || continue
 		fi
-	
+
 		if ! check_buildtime "$f"; then
 			Message "ERROR: you have problems with buildtime"
 			rc=1
 			[ -z "$fast_check" ] || continue
 		fi
-	
+
 		if ! check_packager "$f"; then
 			Message "ERROR: you have problems with packager name"
 			rc=1
 			[ -z "$fast_check" ] || continue
 		fi
-	
+
 		if ! check_printable "$f"; then
 			Message "ERROR: you have problems with package information"
 			rc=1
 			[ -z "$fast_check" ] || continue
 		fi
-	
+
 		if ! check_summary "$f"; then
 			Message "ERROR: you have problems with package summary"
 			rc=1
 			[ -z "$fast_check" ] || continue
 		fi
-	
+
 		if ! check_description "$f"; then
 			Message "ERROR: you have problems with package description"
 			rc=1
 			[ -z "$fast_check" ] || continue
 		fi
-	
+
 		if ! check_group "$f"; then
 			Message "ERROR: you have problems with package group"
 			rc=1
 			[ -z "$fast_check" ] || continue
 		fi
-	
+
 		if ! check_nvr "$f"; then
 			Message "ERROR: you have problems with package name-version-release format"
 			rc=1
 			[ -z "$fast_check" ] || continue
 		fi
-	
-	
+
 		if ! check_deps "$f"; then
 			Message "ERROR: you have problems with package dependencies"
 			rc=1
 			[ -z "$fast_check" ] || continue
 		fi
-	
+
 		if ! check_content "$f"; then
 			Message "ERROR: you have problems with package content"
 			rc=1
 			[ -z "$fast_check" ] || continue
 		fi
-	
+
 		if ! check_libtool "$f"; then
 			Message "ERROR: you have problems with libtool files"
 			rc=1
 			[ -z "$fast_check" ] || continue
 		fi
-	
+
 		# More expensive checks go last.
-	
+
 		if ! check_fhs "$f"; then
 			Message "ERROR: you have problems with standards"
 			rc=1
 			[ -z "$fast_check" ] || continue
 		fi
-	
+
 		if ! check_perms "$f"; then
 			Message "ERROR: you have problems with file permissions"
 			rc=1
 			[ -z "$fast_check" ] || continue
 		fi
-	
+
 		if ! check_intersects "$f"; then
 			Message "ERROR: you have package intersections"
 			rc=1
@@ -757,7 +781,7 @@ check_dirs()
 		else
 			filelist="$(find "$d" -mindepth 1 -maxdepth 1)" || { rc=1; continue; }
 		fi
-		
+
 		[ -n "$filelist" ] || continue
 
 		check_files $filelist || rc=1
