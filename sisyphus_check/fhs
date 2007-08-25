@@ -5,6 +5,8 @@ acct			^/var/account($|/)
 anonftp			^/var/ftp($|/)
 apache-common		^/var/www($|/)
 arm-palmos-*		^/usr/arm-palmos($|/)
+avahi-daemon		^/var/avahi$
+avahi-daemon		^/var/resolv/var/avahi$
 avr-*			^/usr/avr($|/)
 chrooted-resolv		^/var/resolv($|/)
 dev			^/dev($|/)
