@@ -18,3 +18,4 @@ pam[02]_mktemp		^/tmp/\.private$
 prc-tools-common	^/opt/palmdev$
 rootfiles		^/root($|/)
 udev			^/dev($|/)
+webserver-common	^/var/www($|/)

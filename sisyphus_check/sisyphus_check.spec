@@ -1,5 +1,5 @@
 Name: sisyphus_check
-Version: 0.7.19
+Version: 0.7.20
 Release: alt1
 
 Summary: package checker for Sisyphus
@@ -29,6 +29,9 @@ install -pD -m755 %name %buildroot%_bindir/%name
 %_bindir/*
 
 %changelog
+* Tue Sep 18 2007 Dmitry V. Levin <ldv@altlinux.org> 0.7.20-alt1
+- fhs: Added webserver-common (#11784).
+
 * Sat Aug 25 2007 Sergey Bolshakov <sbolshakov@altlinux.ru> 0.7.19-alt1
 - fhs: /var/avahi, /var/resolv/var/avahi
 
