@@ -1,5 +1,5 @@
 Name: sisyphus_check
-Version: 0.7.20
+Version: 0.7.21
 Release: alt1
 
 Summary: package checker for Sisyphus
@@ -29,6 +29,11 @@ install -pD -m755 %name %buildroot%_bindir/%name
 %_bindir/*
 
 %changelog
+* Fri Feb 08 2008 Dmitry V. Levin <ldv@altlinux.org> 0.7.21-alt1
+- check_nvr: Disallowed ipl* and alt0 release numbers.
+- check_perms: Added check for world writable directories.
+- Disabled gpg check exception for kernel@packages.altlinux.
+
 * Tue Sep 18 2007 Dmitry V. Levin <ldv@altlinux.org> 0.7.20-alt1
 - fhs: Added webserver-common (#11784).
 
