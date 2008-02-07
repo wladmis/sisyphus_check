@@ -78,7 +78,7 @@ FileError()
 rpm_signature=
 skip_check_gpgname=
 trust_gpg_names='security incominger'
-no_gpgname_packagers='kernel@packages.altlinux.org'
+no_gpgname_packagers=
 package_type=
 recurse_subdir=
 files=
