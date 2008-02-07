@@ -82,7 +82,7 @@ no_gpgname_packagers='kernel@packages.altlinux.org'
 package_type=
 recurse_subdir=
 files=
-fhs_config="/etc/sisyphus_check/fhs"
+fhs_config='/etc/sisyphus_check/fhs'
 
 # check changelog format
 export no_check_changelog=
@@ -111,7 +111,7 @@ check_changelog()
 	if [ "$package_type" = src ]; then
 		local c_found
 		if ! c_found=`printf %s "$rpm_changelogname" |sed -ne '/^(none)$/q;s/[^<]\+<[^>]\+> *\(.\+\)$/\1/pg'`; then
-			FileError "sed failed" "$f"
+			FileError 'sed failed' "$f"
 			rc=1
 		fi
 
@@ -137,21 +137,21 @@ check_gpg()
 	local bads=
 
 	if [ -z "$rpm_siggpg" ]; then
-		FileError "signature not found" "$f"
+		FileError 'signature not found' "$f"
 		return 1
 	fi
 
 	if ! rpm_signature="$(LC_ALL=C GNUPGHOME=/usr/lib/alt-gpgkeys rpmsign -Kv "$f")"; then
-		FileError "rpmsign failed" "$f"
+		FileError 'rpmsign failed' "$f"
 		return 1
 	fi
 
 	if ! printf %s "$rpm_signature" |grep -qs '^MD5 sum OK: '; then
-		bads=" md5"
+		bads=' md5'
 	fi
 
 	if ! printf %s "$rpm_signature" |grep -qs '^gpg: Good signature '; then
-		bads=" gnupg"
+		bads=' gnupg'
 	fi
 
 	if [ -n "$bads" ]; then
@@ -440,11 +440,11 @@ check_perms()
 	local rc=0
 
 	if printf %s "$rpm_long_filelist" |egrep -e '^-..s(r|.w|...r|....w)|^-...((r.|.w)s|..s(r|.w))' >&2; then
-		FileError "bad permissions for suid/sgid files" "$f"
+		FileError 'bad permissions for suid/sgid files' "$f"
 		rc=1
 	fi
 	if printf %s "$rpm_long_filelist" |egrep -e '^[^l]....(w|...w)[^/]+/usr/' >&2; then
-		FileError "writable files in /usr/" "$f"
+		FileError 'writable files in /usr/' "$f"
 		rc=1
 	fi
 	if printf %s "$rpm_long_filelist" |grep '^d......rwx' >&2; then
@@ -453,7 +453,7 @@ check_perms()
 	fi
 	if [ "$package_type" = src ]; then
 		if printf %s "$rpm_long_filelist" |egrep -e '^-([^r]|.[^w])' >&2; then
-			FileError "bad permissions in source archive" "$f"
+			FileError 'bad permissions in source archive' "$f"
 			rc=1
 		fi
 	fi
@@ -475,7 +475,7 @@ check_intersects()
 	local text
 
 	if ! text="$(printf %s\\n "$rpm_filelist" |LC_COLLATE=C comm -12 -- "$fs_list" -)"; then
-		FileError "comm failed" "$f"
+		FileError 'comm failed' "$f"
 		rc=1
 	fi
 
@@ -523,9 +523,9 @@ init_check()
 	fs_list="$(mktemp -t "$PROG.XXXXXXXXXX")"
 	trap exit_handler HUP PIPE INT QUIT TERM EXIT
 
-	fs_filelist="$(LC_ALL=C rpmquery -l filesystem)" || Fatal "rpmquery filesystem failed."
-	printf %s "$fs_filelist" |LC_COLLATE=C sort -u >"$fs_list" || Fatal "sort failed."
-	current_time="$(date +%s)" || Fatal "date failed."
+	fs_filelist="$(LC_ALL=C rpmquery -l filesystem)" || Fatal 'rpmquery filesystem failed.'
+	printf %s "$fs_filelist" |LC_COLLATE=C sort -u >"$fs_list" || Fatal 'sort failed.'
+	current_time="$(date +%s)" || Fatal 'date failed.'
 	packager_pattern='<[^@]+(@| at )(packages\.)?altlinux(\.| dot )(com|net|org|ru)>'
 }
 
@@ -554,18 +554,18 @@ fast_check=
 # cummulative check
 check_files()
 {
-	init_check || Fatal "init_check failed."
+	init_check || Fatal 'init_check failed.'
 
 	local f rc=0
 	for f in "$@"; do
 		if [ ! -f "$f" ]; then
-			FileError "not a regular file" "$f"
+			FileError 'not a regular file' "$f"
 			rc=1
 			continue
 		fi
 
 		if ! get_package_type "$f"; then
-			FileError "unexpected file type" "$f"
+			FileError 'unexpected file type' "$f"
 			rc=1
 			continue
 		fi
@@ -575,7 +575,7 @@ check_files()
 		if ! values="$(LC_ALL=C rpmquery -p --qf= -- "$f" 2>&1)" ||
 		   [ -n "$values" ]; then
 			printf >&2 %s\\n "$values"
-			FileError "rpmquery failed" "$f"
+			FileError 'rpmquery failed' "$f"
 			rc=1
 			continue
 		fi
@@ -604,7 +604,7 @@ rpm_url=%{url:shescape};
 rpm_vendor=%{vendor:shescape};
 rpm_version=%{version:shescape};
 			' -- "$f")"; then
-			FileError "rpmquery failed" "$f"
+			FileError 'rpmquery failed' "$f"
 			rc=1
 			continue
 		fi
@@ -621,20 +621,20 @@ rpm_version=%{version:shescape};
 		unset values
 
 		if ! check_changelog "$f"; then
-			Message "ERROR: you have problems with changelog format"
+			Message 'ERROR: you have problems with changelog format'
 			rc=1
 			[ -z "$fast_check" ] || continue
 		fi
 
 		if ! check_gpg "$f"; then
-			Message "ERROR: you have problems with package signatures"
+			Message 'ERROR: you have problems with package signatures'
 			skip_check_gpgname=1
 			rc=1
 			[ -z "$fast_check" ] || continue
 		fi
 
 		if ! check_gpgname "$f"; then
-			Message "ERROR: you have signature/changelog mismatch"
+			Message 'ERROR: you have signature/changelog mismatch'
 			rc=1
 			[ -z "$fast_check" ] || continue
 		fi
@@ -643,94 +643,94 @@ rpm_version=%{version:shescape};
 		local rpm_filelist rpm_long_filelist
 
 		if ! rpm_deps="$(LC_ALL=C rpmquery -p --requires --provides --obsoletes --conflicts "$f")"; then
-			FileError "rpmquery failed" "$f"
+			FileError 'rpmquery failed' "$f"
 			rc=1
 			continue
 		fi
 
 		if ! rpm_requires="$(LC_ALL=C rpmquery -p --qf '[%{REQUIRENAME}\n]' "$f")"; then
-			FileError "rpmquery failed" "$f"
+			FileError 'rpmquery failed' "$f"
 			rc=1
 			continue
 		fi
 
 		if ! rpm_filelist="$(LC_ALL=C rpmquery -pl "$f")"; then
-			FileError "rpmquery failed" "$f"
+			FileError 'rpmquery failed' "$f"
 			rc=1
 			continue
 		fi
 
 		if ! rpm_long_filelist="$(LC_ALL=C rpmquery -plv "$f")"; then
-			FileError "rpmquery failed" "$f"
+			FileError 'rpmquery failed' "$f"
 			rc=1
 			continue
 		fi
 
-		rpm_filelist="$(printf %s "$rpm_filelist" |LC_COLLATE=C sort -u)" || Fatal "sort failed."
-		rpm_long_filelist="$(printf %s "$rpm_long_filelist" |LC_COLLATE=C sort -u)" || Fatal "sort failed."
+		rpm_filelist="$(printf %s "$rpm_filelist" |LC_COLLATE=C sort -u)" || Fatal 'sort failed.'
+		rpm_long_filelist="$(printf %s "$rpm_long_filelist" |LC_COLLATE=C sort -u)" || Fatal 'sort failed.'
 
 		if ! check_buildhost "$f"; then
-			Message "ERROR: you have problems with buildhost name"
+			Message 'ERROR: you have problems with buildhost name'
 			rc=1
 			[ -z "$fast_check" ] || continue
 		fi
 
 		if ! check_buildtime "$f"; then
-			Message "ERROR: you have problems with buildtime"
+			Message 'ERROR: you have problems with buildtime'
 			rc=1
 			[ -z "$fast_check" ] || continue
 		fi
 
 		if ! check_packager "$f"; then
-			Message "ERROR: you have problems with packager name"
+			Message 'ERROR: you have problems with packager name'
 			rc=1
 			[ -z "$fast_check" ] || continue
 		fi
 
 		if ! check_printable "$f"; then
-			Message "ERROR: you have problems with package information"
+			Message 'ERROR: you have problems with package information'
 			rc=1
 			[ -z "$fast_check" ] || continue
 		fi
 
 		if ! check_summary "$f"; then
-			Message "ERROR: you have problems with package summary"
+			Message 'ERROR: you have problems with package summary'
 			rc=1
 			[ -z "$fast_check" ] || continue
 		fi
 
 		if ! check_description "$f"; then
-			Message "ERROR: you have problems with package description"
+			Message 'ERROR: you have problems with package description'
 			rc=1
 			[ -z "$fast_check" ] || continue
 		fi
 
 		if ! check_group "$f"; then
-			Message "ERROR: you have problems with package group"
+			Message 'ERROR: you have problems with package group'
 			rc=1
 			[ -z "$fast_check" ] || continue
 		fi
 
 		if ! check_nvr "$f"; then
-			Message "ERROR: you have problems with package name-version-release format"
+			Message 'ERROR: you have problems with package name-version-release format'
 			rc=1
 			[ -z "$fast_check" ] || continue
 		fi
 
 		if ! check_deps "$f"; then
-			Message "ERROR: you have problems with package dependencies"
+			Message 'ERROR: you have problems with package dependencies'
 			rc=1
 			[ -z "$fast_check" ] || continue
 		fi
 
 		if ! check_content "$f"; then
-			Message "ERROR: you have problems with package content"
+			Message 'ERROR: you have problems with package content'
 			rc=1
 			[ -z "$fast_check" ] || continue
 		fi
 
 		if ! check_libtool "$f"; then
-			Message "ERROR: you have problems with libtool files"
+			Message 'ERROR: you have problems with libtool files'
 			rc=1
 			[ -z "$fast_check" ] || continue
 		fi
@@ -738,25 +738,25 @@ rpm_version=%{version:shescape};
 		# More expensive checks go last.
 
 		if ! check_fhs "$f"; then
-			Message "ERROR: you have problems with standards"
+			Message 'ERROR: you have problems with standards'
 			rc=1
 			[ -z "$fast_check" ] || continue
 		fi
 
 		if ! check_perms "$f"; then
-			Message "ERROR: you have problems with file permissions"
+			Message 'ERROR: you have problems with file permissions'
 			rc=1
 			[ -z "$fast_check" ] || continue
 		fi
 
 		if ! check_intersects "$f"; then
-			Message "ERROR: you have package intersections"
+			Message 'ERROR: you have package intersections'
 			rc=1
 			[ -z "$fast_check" ] || continue
 		fi
 
 		if ! check_locales "$f"; then
-			Message "ERROR: you have problems with locale files"
+			Message 'ERROR: you have problems with locale files'
 			rc=1
 			[ -z "$fast_check" ] || continue
 		fi
@@ -892,7 +892,7 @@ done
 
 # At least one argument, please.
 if ! [ "$#" -ge 1 ]; then
-	Info "at least one argument is required."
+	Info 'Insufficient arguments.'
 	show_usage
 fi
 
