@@ -447,6 +447,10 @@ check_perms()
 		FileError "writable files in /usr/" "$f"
 		rc=1
 	fi
+	if printf %s "$rpm_long_filelist" |grep '^d......rwx' >&2; then
+		FileError 'world writable directories' "$f"
+		rc=1
+	fi
 	if [ "$package_type" = src ]; then
 		if printf %s "$rpm_long_filelist" |egrep -e '^-([^r]|.[^w])' >&2; then
 			FileError "bad permissions in source archive" "$f"
