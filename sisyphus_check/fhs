@@ -10,6 +10,7 @@ avahi-daemon		^/var/resolv/var/avahi$
 avr-*			^/usr/avr($|/)
 chrooted-resolv		^/var/resolv($|/)
 dev			^/dev($|/)
+dev-minimal		^/dev($|/)
 gpm			^/dev/gpmctl$
 i386-mingw32msvc-*	^/usr/i386-mingw32msvc($|/)
 m68k-palmos-*		^/usr/m68k-palmos($|/)
