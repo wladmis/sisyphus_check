@@ -1,0 +1,23 @@
+#!/bin/sh -efu
+
+current_time="${current_time:-$(date +%s)}"
+rpm_buildtime=${rpm_buildtime?RPM buildtime required}
+
+# check for valid buildtime
+check_buildtime()
+{
+	local f="$1" && shift || return 1
+
+	if ! [ "$current_time" -ge "$rpm_buildtime" ] 2>/dev/null; then
+		FileError "BUILDTIME in the future: $(date -d "1970-01-01 UTC $rpm_buildtime seconds")" "$f"
+		return 1
+	fi
+	return 0
+}
+
+run_check() {
+	if ! check_buildtime "$1"; then
+		Message 'ERROR: you have problems with buildtime'
+		return 1
+	fi
+}

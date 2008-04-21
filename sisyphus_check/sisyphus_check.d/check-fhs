@@ -1,0 +1,43 @@
+#!/bin/sh -efu
+
+fhs_config='/etc/sisyphus_check/fhs'
+
+rpm_name="${rpm_name?RPM name required}"
+rpm_filelist="${rpm_filelist?RPM file list required}"
+
+# check for FHS-2.2 violations
+check_fhs()
+{
+	local f="$1" && shift || return 1
+	local list pattern bad
+
+	# Do not check filesystem package.
+	[ "$rpm_name" != filesystem ] || return 0
+
+	list=$(printf %s "$rpm_filelist" |grep -e '^/')
+	[ -n "$list" ] || return 0
+
+	pattern="$(grep '^[^#]' "$fhs_config" |
+		while read -r n v; do
+			[ -n "$n" -a -n "$v" -a -z "${rpm_name##$n}" ] || continue
+			printf %s\\n "$v"
+		done |LC_COLLATE=C sort -u)" || return 1
+	pattern="$(printf %s "$pattern" |tr -s '\n' '|')"
+	[ "$pattern" != '' ] || pattern='^$'
+
+	list="$(printf %s "$list" |egrep -v "$pattern")" ||
+		return 0
+
+	if bad="$(printf %s "$list" |egrep -ve '^/(bin|boot|etc|lib(64)?|sbin|usr/(X11R6|bin|etc|games|include|lib(exec|64)?|sbin|share|src)|var/(cache|games|lib|lock|log|run|spool|www|yp))/.*')"; then
+		FileError "FHS-2.2 violations: $(printf %s "$bad" |tr -s '[:space:]' ' ')" "$f"
+		return 1
+	fi
+	return 0
+}
+
+run_check() {
+	if ! check_fhs "$1"; then
+		Message 'ERROR: you have problems with standards'
+		return 1
+	fi
+}

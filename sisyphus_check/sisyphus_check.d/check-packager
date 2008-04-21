@@ -1,0 +1,23 @@
+#!/bin/sh -efu
+
+packager_pattern="${packager_pattern?}"
+rpm_packager="${rpm_packager?RPM packager required}"
+
+# check for valid format of PACKAGER tag
+check_packager()
+{
+	local f="$1" && shift || return 1
+
+	if ! printf %s "$rpm_packager" |egrep -qs "$packager_pattern"; then
+		FileError "wrong PACKAGER: $rpm_packager" "$f"
+		return 1
+	fi
+	return 0
+}
+
+run_check() {
+	if ! check_packager "$1"; then
+		Message 'ERROR: you have problems with packager name'
+		return 1
+	fi
+}

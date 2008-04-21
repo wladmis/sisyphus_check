@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/bin/sh -efu
 #
 # Copyright (C) 2003-2008  Stanislav Ievlev <inger@altlinux.org>,
 #                          Dmitry V. Levin <ldv@altlinux.org>,
@@ -21,537 +21,39 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
 
-unset \
-	LANG \
-	LANGUAGE \
-	LINGUAS \
-	LC_CTYPE \
-	LC_NUMERIC \
-	LC_TIME \
-	LC_COLLATE \
-	LC_MONETARY \
-	LC_MESSAGES \
-	LC_PAPER \
-	LC_NAME \
-	LC_ADDRESS \
-	LC_TELEPHONE \
-	LC_MEASUREMENT \
-	LC_IDENTIFICATION \
-	LC_ALL \
-	||:
+. sisyphus-check-functions
 
-PROG="${0##*/}"
+sisyphus_check_d='/etc/sisyphus_check/check.d'
 
-Info()
-{
-	printf %s\\n "$PROG: $*" >&2
-}
+check_list='check-changelog check-gpg check-buildhost check-buildtime check-packager
+check-printable check-summary check-description check-group check-nvr check-deps
+check-content check-libtool check-fhs check-perms check-intersects check-locales'
 
-Fatal()
-{
-	printf %s\\n "$PROG: $*" >&2
-	exit 1
-}
-
-quiet=
-Message()
-{
-	[ -z "$quiet" ] || return 0
-	printf %s\\n "$*"
-}
-
-show_bad_files=
-FileError()
-{
-	local text="$1"
-	shift || return
-	local f="$1"
-
-	if [ -n "$f" ]; then
-		text="${text#$f: }"
-		text="$f: $text"
-		[ -z "$show_bad_files" ] || printf %s\\n "$f"
-	fi
-	printf %s\\n "$(printf %s "$text" |tr '[:cntrl:]' ' ')" >&2
-}
-
-rpm_signature=
-skip_check_gpgname=
 trust_gpg_names='security incominger'
-no_gpgname_packagers=
 package_type=
 recurse_subdir=
 files=
-fhs_config='/etc/sisyphus_check/fhs'
-
-# check changelog format
-export no_check_changelog=
-check_changelog()
-{
-	[ -z "$no_check_changelog" ] || return 0
-	local f="$1" && shift || return 1
-	local rc=0
-
-	if ! [ "$((current_time+86400))" -ge "$rpm_changelogtime" ] 2>/dev/null; then
-		FileError "CHANGELOGTIME in the future: $(date -d "1970-01-01 UTC $rpm_changelogtime seconds")" "$f"
-		rc=1
-	fi
-
-	if ! printf %s "$rpm_changelogtext" |sed -e 's/[^[:alnum:]]//g' |grep -qsv '^$'; then
-		FileError "invalid CHANGELOGTEXT: $(printf %s "$rpm_changelogtext" |tr -s '[:space:]' ' ')" "$f"
-		rc=1
-	fi
-
-	if ! printf %s "$rpm_changelogname" |egrep -qs "$packager_pattern"; then
-		FileError "wrong packager in CHANGELOGNAME: $rpm_changelogname" "$f"
-		rc=1
-	fi
-
-	# Do not check changelog name for binary rpms.
-	if [ "$package_type" = src ]; then
-		local c_found
-		if ! c_found=`printf %s "$rpm_changelogname" |sed -ne '/^(none)$/q;s/[^<]\+<[^>]\+> *\(.\+\)$/\1/pg'`; then
-			FileError 'sed failed' "$f"
-			rc=1
-		fi
-
-		local c_expected
-		[ -z "$rpm_serial" ] && c_expected= || c_expected="$rpm_serial:"
-		c_expected="$c_expected$rpm_version-$rpm_release"
-
-		if [ "$c_expected" != "$c_found" ]; then
-			FileError "wrong CHANGELOGNAME: expected \"$c_expected\", found \"$c_found\"" "$f"
-			rc=1
-		fi
-	fi
-
-	return $rc
-}
-
-# check package signature
-export no_check_gpg=
-check_gpg()
-{
-	[ -z "$no_check_gpg" ] || return 0
-	local f="$1" && shift || return 1
-	local bads=
-
-	if [ -z "$rpm_siggpg" ]; then
-		FileError 'signature not found' "$f"
-		return 1
-	fi
-
-	if ! rpm_signature="$(LC_ALL=C GNUPGHOME=/usr/lib/alt-gpgkeys rpmsign -Kv "$f")"; then
-		FileError 'rpmsign failed' "$f"
-		return 1
-	fi
-
-	if ! printf %s "$rpm_signature" |grep -qs '^MD5 sum OK: '; then
-		bads=' md5'
-	fi
-
-	if ! printf %s "$rpm_signature" |grep -qs '^gpg: Good signature '; then
-		bads=' gnupg'
-	fi
-
-	if [ -n "$bads" ]; then
-		FileError "bad SIGNATURE:$bads NOT ok" "$f"
-		return 1
-	fi
-
-	return 0
-}
-
-# check package changelogname and signature
-export no_check_gpgname=
-check_gpgname()
-{
-	[ -z "$no_check_gpg" -a -z "$no_check_gpgname" -a -z "$skip_check_gpgname" ] || return 0
-
-	local packager pname
-	packager="$(printf %s "$rpm_packager" |
-		sed -ne 's/^[^<]*<\([^@]\+\(@\| at \)[^>]\+\)>.*/\1/p' |
-		tr -s '[:space:]' ' ')"
-	for pname in $no_gpgname_packagers; do
-		[ "$pname" != "$packager" ] || return 0
-	done
-
-	local f="$1" && shift || return 1
-	local chlogname sed_gpg_name gpg_name
-
-	chlogname="$(printf %s "$rpm_changelogname" |
-		sed -ne 's/^.*<\([^@]\+\)\(@\| at \).*$/\1/p' |
-		tr '[:upper:]' '[:lower:]')"
-	sed_gpg_name='s/^.*[[:space:]]\(from\|aka\)[^<]\+<\([^@>]\+\)@altlinux\.\(ru\|com\|net\|org\)>.*$/\2/p'
-
-	for sign in $(printf %s "$rpm_signature" |sed -ne "$sed_gpg_name" |tr '[:upper:]' '[:lower:]' |sort -u); do
-		for gpg_name in $trust_gpg_names; do
-		    [ "$sign" != "$gpg_name" ] || return 0
-		done
-		[ "$sign" != "$chlogname" ] || return 0
-	done
-
-	chlogname="$(printf %s "$rpm_changelogname" |
-		sed -ne 's/^[^<]*<\([^@]\+\(@\| at \)[^>]\+\)>.*/\1/p' |
-		tr -s '[:space:]' ' ')"
-	FileError "changelog name $chlogname not found in signature" "$f"
-	return 1
-}
-
-# check for valid buildhost
-export no_check_buildhost=
-check_buildhost()
-{
-	[ -z "$no_check_buildhost" ] || return 0
-	local f="$1" && shift || return 1
-
-	# Do not check build host for source rpms.
-	[ "$package_type" != src ] || return 0
-
-	if ! printf %s "$rpm_buildhost" |egrep -qs '^[^.]+\.(hasher|sandman)\.altlinux\.org$'; then
-		FileError "wrong BUILDHOST: $rpm_buildhost" "$f"
-		return 1
-	fi
-	return 0
-}
-
-# check for valid buildtime
-export no_check_buildtime=
-check_buildtime()
-{
-	[ -z "$no_check_buildtime" ] || return 0
-	local f="$1" && shift || return 1
-
-	if ! [ "$current_time" -ge "$rpm_buildtime" ] 2>/dev/null; then
-		FileError "BUILDTIME in the future: $(date -d "1970-01-01 UTC $rpm_buildtime seconds")" "$f"
-		return 1
-	fi
-	return 0
-}
-
-# check for printable summary, description, etc.
-export no_check_printable=
-check_printable()
-{
-	[ -z "$no_check_printable" ] || return 0
-	local f="$1" && shift || return 1
-	local text
-
-	text="$rpm_name $rpm_version $rpm_release $rpm_group $rpm_packager $rpm_license $rpm_summary $rpm_description $rpm_changelogname $rpm_changelogtext"
-
-	if [ -n "$(printf %s "$text" |LC_ALL=C tr -d '[:print:][:space:]')" ]; then
-		FileError "unprintable package information: $(printf %s "$text" |LC_ALL=C tr -d '[:print:][:space:]')" "$f"
-		return 1
-	fi
-	return 0
-}
-
-# check for valid nvr
-export no_check_nvr=
-check_nvr()
-{
-	[ -z "$no_check_nvr" ] || return 0
-	local f="$1" && shift || return 1
-	local rc=0
-
-	if printf %s "$rpm_version" |grep -qs '[%<=>]'; then
-		FileError "invalid package VERSION: $rpm_version" "$f"
-		rc=1
-	fi
-
-	if printf %s "$rpm_release" |grep -qs '[%<=>]'; then
-		FileError "invalid package RELEASE: $rpm_release" "$f"
-		rc=1
-	fi
-
-	if ! printf %s "$rpm_release" |egrep -qs '^alt([1-9]|0.)'; then
-		FileError "invalid package RELEASE: $rpm_release" "$f"
-		rc=1
-	fi
-
-	local arch="$rpm_arch"
-	[ "$package_type" != src ] || arch="src"
-	local expected="$rpm_name-$rpm_version-$rpm_release.$arch.rpm"
-	if [ "$expected" != "${f##*/}" ]; then
-		FileError "invalid FILENAME: $expected expected" "$f"
-		rc=1
-	fi
-
-	return $rc
-}
-
-# check for valid summary
-export no_check_summary=
-check_summary()
-{
-	[ -z "$no_check_summary" ] || return 0
-	local f="$1" && shift || return 1
-
-	if ! printf %s "$rpm_summary" |egrep -qs '[[:alpha:]]'; then
-		FileError "invalid SUMMARY: $rpm_summary" "$f"
-		return 1
-	fi
-	return 0
-}
-
-# check for valid description
-export no_check_description=
-check_description()
-{
-	[ -z "$no_check_description" ] || return 0
-	local f="$1" && shift || return 1
-
-	if ! printf %s "$rpm_description" |egrep -qs '[[:alpha:]]'; then
-		FileError "invalid DESCRIPTION: $(printf %s "$rpm_description" |tr -s '[:space:]' ' ')" "$f"
-		return 1
-	fi
-	return 0
-}
-
-# check for valid group
-export no_check_group=
-check_group()
-{
-	[ -z "$no_check_group" ] || return 0
-	local f="$1" && shift || return 1
-
-	if ! grep -q "^$rpm_group$" /usr/lib/rpm/GROUPS; then
-		FileError "wrong GROUP: $rpm_group" "$f"
-		return 1
-	fi
-	return 0
-}
-
-# check for valid format of PACKAGER tag
-export no_check_packager=
-check_packager()
-{
-	[ -z "$no_check_packager" ] || return 0
-	local f="$1" && shift || return 1
-
-	if ! printf %s "$rpm_packager" |egrep -qs "$packager_pattern"; then
-		FileError "wrong PACKAGER: $rpm_packager" "$f"
-		return 1
-	fi
-	return 0
-}
-
-# check for inacceptable dependencies
-export no_check_deps=
-check_deps()
-{
-	[ -z "$no_check_deps" ] || return 0
-	local f="$1" && shift || return 1
-	local rc=0
-	local bad
-
-	bad="$(printf %s "$rpm_deps" |grep '[$%]')"
-	if [ -n "$bad" ]; then
-		FileError "invalid dependencies: $(printf %s "$bad" |tr -s '[:space:]' ' ')" "$f"
-		rc=1
-	fi
-
-	bad="$(printf %s "$rpm_requires" |egrep '^(fileutils|initscripts|sh-utils|textutils|/etc/rc\.d/init\.d\((daemon|killproc|pidof)\)|pam_stack\.so)$')"
-	if [ -n "$bad" ]; then
-		FileError "forbidden requires: $(printf %s "$bad" |tr -s '[:space:]' ' ')" "$f"
-		rc=1
-	fi
-
-	return $rc
-}
-
-# check files intersections with known packages
-export no_check_content=
-check_content()
-{
-	[ -z "$no_check_content" ] || return 0
-	local f="$1" && shift || return 1
-	local rc=0
-	local bad
-
-	if [ "$rpm_name" != rpm ] && bad="$(printf %s "$rpm_filelist" |egrep -e '^/etc/rpm(/macros\.d)$')"; then
-		FileError "intersections with rpm: $(printf %s "$bad" |tr -s '[:space:]' ' ')" "$f"
-		rc=1
-	fi
-
-	if [ "$rpm_name" != control ] && bad="$(printf %s "$rpm_filelist" |egrep -e '^/etc/control\.d(/facilities)?$')"; then
-		FileError "intersections with control: $(printf %s "$bad" |tr -s '[:space:]' ' ')" "$f"
-		rc=1
-	fi
-
-	return $rc
-}
-
-# check files intersections with known packages
-export no_check_libtool=1
-check_libtool()
-{
-	[ -z "$no_check_libtool" ] || return 0
-	local f="$1" && shift || return 1
-	local rc=0
-	local bad
-
-	if bad="$(printf %s "$rpm_filelist" |egrep -e '^(/usr(/X11R6)?)?/lib(64)?/lib[^/]+\.la$')"; then
-		FileError "forbidden libtool files: $(printf %s "$bad" |tr -s '[:space:]' ' ')" "$f"
-		rc=1
-	fi
-
-	return $rc
-}
-
-# check for FHS-2.2 violations
-export no_check_fhs=
-check_fhs()
-{
-	[ -z "$no_check_fhs" ] || return 0
-	local f="$1" && shift || return 1
-	local list pattern bad
-
-	# Do not check filesystem package.
-	[ "$rpm_name" != filesystem ] || return 0
-
-	list=$(printf %s "$rpm_filelist" |grep -e '^/')
-	[ -n "$list" ] || return 0
-
-	pattern="$(grep '^[^#]' "$fhs_config" |
-		while read -r n v; do
-			[ -n "$n" -a -n "$v" -a -z "${rpm_name##$n}" ] || continue
-			printf %s\\n "$v"
-		done |LC_COLLATE=C sort -u)" || return 1
-	pattern="$(printf %s "$pattern" |tr -s '\n' '|')"
-	[ "$pattern" != '' ] || pattern='^$'
-
-	list="$(printf %s "$list" |egrep -v "$pattern")" ||
-		return 0
-
-	if bad="$(printf %s "$list" |egrep -ve '^/(bin|boot|etc|lib(64)?|sbin|usr/(X11R6|bin|etc|games|include|lib(exec|64)?|sbin|share|src)|var/(cache|games|lib|lock|log|run|spool|www|yp))/.*')"; then
-		FileError "FHS-2.2 violations: $(printf %s "$bad" |tr -s '[:space:]' ' ')" "$f"
-		return 1
-	fi
-	return 0
-}
-
-# check files permissions
-export no_check_perms=
-check_perms()
-{
-	[ -z "$no_check_perms" ] || return 0
-	local f="$1" && shift || return 1
-	local rc=0
-
-	if printf %s "$rpm_long_filelist" |egrep -e '^-..s(r|.w|...r|....w)|^-...((r.|.w)s|..s(r|.w))' >&2; then
-		FileError 'bad permissions for suid/sgid files' "$f"
-		rc=1
-	fi
-	if printf %s "$rpm_long_filelist" |egrep -e '^[^l]....(w|...w)[^/]+/usr/' >&2; then
-		FileError 'writable files in /usr/' "$f"
-		rc=1
-	fi
-	if printf %s "$rpm_long_filelist" |grep '^d......rwx' >&2; then
-		FileError 'world writable directories' "$f"
-		rc=1
-	fi
-	if [ "$package_type" = src ]; then
-		if printf %s "$rpm_long_filelist" |egrep -e '^-([^r]|.[^w])' >&2; then
-			FileError 'bad permissions in source archive' "$f"
-			rc=1
-		fi
-	fi
-
-	return $rc
-}
-
-# check files intersections with filesystem
-export no_check_intersects=
-check_intersects()
-{
-	[ -z "$no_check_intersects" ] || return 0
-	local f="$1" && shift || return 1
-
-	# Do not check filesystem package.
-	[ "$rpm_name" != filesystem ] || return 0
-
-	local rc=0
-	local text
-
-	if ! text="$(printf %s\\n "$rpm_filelist" |LC_COLLATE=C comm -12 -- "$fs_list" -)"; then
-		FileError 'comm failed' "$f"
-		rc=1
-	fi
-
-	if [ -n "$text" ]; then
-		FileError "filesystem intersections: $(printf %s "$text" |tr -s '[:space:]' ' ')" "$f"
-		rc=1
-	fi
-
-	return $rc
-}
-
-# check locales not included into glibc-locales
-export no_check_locales=
-check_locales()
-{
-	[ -z "$no_check_locales" ] || return 0
-	local f="$1" && shift || return 1
-
-	# Do not check glibc-locales package.
-	[ "$rpm_name" != glibc-locales ] || return 0
-
-	local locales
-	if locales="$(printf %s "$rpm_filelist" |grep '^/usr/share/locale\(/[^/]\+\)\?$')"; then
-		FileError "files may belong to glibc-locales only: $(printf %s "$locales" |tr -s '[:space:]' ' ')" "$f"
-		return 1
-	fi
-}
-
-fs_list=
-exit_handler()
-{
-	local rc=$?
-	trap - EXIT
-	[ -z "$fs_list" ] || rm -f -- "$fs_list"
-	exit $rc
-}
-
-init_check()
-{
-	[ -z "$fs_list" ] || return 0
-
-	unset current_time packager_pattern
-	local fs_filelist
-
-	fs_list="$(mktemp -t "$PROG.XXXXXXXXXX")"
-	trap exit_handler HUP PIPE INT QUIT TERM EXIT
-
-	fs_filelist="$(LC_ALL=C rpmquery -l filesystem)" || Fatal 'rpmquery filesystem failed.'
-	printf %s "$fs_filelist" |LC_COLLATE=C sort -u >"$fs_list" || Fatal 'sort failed.'
-	current_time="$(date +%s)" || Fatal 'date failed.'
-	packager_pattern='<[^@]+(@| at )(packages\.)?altlinux(\.| dot )(com|net|org|ru)>'
-}
-
-get_package_type()
-{
-	local file header
-
-	package_type=
-	file="$1" && shift
-	header="$(od -A n -N 8 -t x1 -- "$file")" || return
-	case "$header" in
-	' ed ab ee db '??' '??' 00 00')
-		package_type=bin
-		return 0
-		;;
-	' ed ab ee db '??' '??' 00 01')
-		package_type=src
-		return 0
-		;;
-	esac
-	return 1;
-}
-
-fast_check=
 
 # cummulative check
+fast_check=
+run_checks() {
+	local f="$1" && shift || return 1
+	local rc=0 check check_var
+
+	for check in $check_list; do
+		check_var="$(printf '%s' "no_check_$check" |tr - _)"
+
+		if eval "[ -z \"\${$check_var-}\" ]"; then
+			if ! (. "$sisyphus_check_d/$check" && run_check "$f"); then
+				[ -z "$fast_check" ] || return 1
+				rc=1
+			fi
+		fi
+	done
+
+	return $rc
+}
+
 check_files()
 {
 	init_check || Fatal 'init_check failed.'
@@ -620,146 +122,16 @@ rpm_version=%{version:shescape};
 		eval "$values"
 		unset values
 
-		if ! check_changelog "$f"; then
-			Message 'ERROR: you have problems with changelog format'
-			rc=1
-			[ -z "$fast_check" ] || continue
-		fi
-
-		if ! check_gpg "$f"; then
-			Message 'ERROR: you have problems with package signatures'
-			skip_check_gpgname=1
-			rc=1
-			[ -z "$fast_check" ] || continue
-		fi
-
-		if ! check_gpgname "$f"; then
-			Message 'ERROR: you have signature/changelog mismatch'
-			rc=1
-			[ -z "$fast_check" ] || continue
-		fi
-
-		local rpm_deps rpm_requires
-		local rpm_filelist rpm_long_filelist
-
-		if ! rpm_deps="$(LC_ALL=C rpmquery -p --requires --provides --obsoletes --conflicts "$f")"; then
-			FileError 'rpmquery failed' "$f"
-			rc=1
-			continue
-		fi
-
-		if ! rpm_requires="$(LC_ALL=C rpmquery -p --qf '[%{REQUIRENAME}\n]' "$f")"; then
-			FileError 'rpmquery failed' "$f"
-			rc=1
-			continue
-		fi
+		local rpm_filelist
 
 		if ! rpm_filelist="$(LC_ALL=C rpmquery -pl "$f")"; then
 			FileError 'rpmquery failed' "$f"
 			rc=1
 			continue
 		fi
-
-		if ! rpm_long_filelist="$(LC_ALL=C rpmquery -plv "$f")"; then
-			FileError 'rpmquery failed' "$f"
-			rc=1
-			continue
-		fi
-
 		rpm_filelist="$(printf %s "$rpm_filelist" |LC_COLLATE=C sort -u)" || Fatal 'sort failed.'
-		rpm_long_filelist="$(printf %s "$rpm_long_filelist" |LC_COLLATE=C sort -u)" || Fatal 'sort failed.'
 
-		if ! check_buildhost "$f"; then
-			Message 'ERROR: you have problems with buildhost name'
-			rc=1
-			[ -z "$fast_check" ] || continue
-		fi
-
-		if ! check_buildtime "$f"; then
-			Message 'ERROR: you have problems with buildtime'
-			rc=1
-			[ -z "$fast_check" ] || continue
-		fi
-
-		if ! check_packager "$f"; then
-			Message 'ERROR: you have problems with packager name'
-			rc=1
-			[ -z "$fast_check" ] || continue
-		fi
-
-		if ! check_printable "$f"; then
-			Message 'ERROR: you have problems with package information'
-			rc=1
-			[ -z "$fast_check" ] || continue
-		fi
-
-		if ! check_summary "$f"; then
-			Message 'ERROR: you have problems with package summary'
-			rc=1
-			[ -z "$fast_check" ] || continue
-		fi
-
-		if ! check_description "$f"; then
-			Message 'ERROR: you have problems with package description'
-			rc=1
-			[ -z "$fast_check" ] || continue
-		fi
-
-		if ! check_group "$f"; then
-			Message 'ERROR: you have problems with package group'
-			rc=1
-			[ -z "$fast_check" ] || continue
-		fi
-
-		if ! check_nvr "$f"; then
-			Message 'ERROR: you have problems with package name-version-release format'
-			rc=1
-			[ -z "$fast_check" ] || continue
-		fi
-
-		if ! check_deps "$f"; then
-			Message 'ERROR: you have problems with package dependencies'
-			rc=1
-			[ -z "$fast_check" ] || continue
-		fi
-
-		if ! check_content "$f"; then
-			Message 'ERROR: you have problems with package content'
-			rc=1
-			[ -z "$fast_check" ] || continue
-		fi
-
-		if ! check_libtool "$f"; then
-			Message 'ERROR: you have problems with libtool files'
-			rc=1
-			[ -z "$fast_check" ] || continue
-		fi
-
-		# More expensive checks go last.
-
-		if ! check_fhs "$f"; then
-			Message 'ERROR: you have problems with standards'
-			rc=1
-			[ -z "$fast_check" ] || continue
-		fi
-
-		if ! check_perms "$f"; then
-			Message 'ERROR: you have problems with file permissions'
-			rc=1
-			[ -z "$fast_check" ] || continue
-		fi
-
-		if ! check_intersects "$f"; then
-			Message 'ERROR: you have package intersections'
-			rc=1
-			[ -z "$fast_check" ] || continue
-		fi
-
-		if ! check_locales "$f"; then
-			Message 'ERROR: you have problems with locale files'
-			rc=1
-			[ -z "$fast_check" ] || continue
-		fi
+		run_checks "$f"
 	done
 
 	return $rc
@@ -823,13 +195,13 @@ Valid options are:
   --trust-gpg-names=LIST
   --[no-]check=LIST
 EOF
-	printf %s\\n "$check_env" |sed -ne 's/.*/  --&/pg' |tr _ - |sed -e 's/--no-/--[no-]/'
+	printf %s\\n "$check_env" |sed -ne 's/.*/  --[no-]&/pg'
 	exit
 }
 
-check_env="$(printenv |sed -ne 's/^\(no_check_[a-z]\+\)=.*/\1/pg' |sort -u)"
-getopt_check="$(printf %s "$check_env" |sed -e 's/^no_//' |tr _ - |tr -s '[:space:]' ',')"
-getopt_no_check="$(printf %s "$check_env" |tr _ - |tr -s '[:space:]' ',')"
+check_env="$(printf %s\\n "$check_list" |tr '[:space:]' '\n' |sort -u)"
+getopt_check="$(printf %s "$check_env" |tr -s '[:space:]' ',')"
+getopt_no_check="$(printf %s "$check_env" |sed -e 's/.*/no-&/' |tr -s '[:space:]' ',')"
 TEMP=`getopt -n $PROG -o h,q,v -l help,quiet,verbose,fast-check,files,directories,show-bad-files,recursive,trust-gpg-names:,check:,no-check:,check-,no-check-,$getopt_check,$getopt_no_check -- "$@"` || show_usage
 eval set -- "$TEMP"
 

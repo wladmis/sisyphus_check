@@ -1,0 +1,44 @@
+#!/bin/sh -efu
+
+package_type="${package_type?}"
+
+# check files permissions
+check_perms()
+{
+	local f="$1" && shift || return 1
+	local rpm_long_filelist rc=0
+
+	if ! rpm_long_filelist="$(LC_ALL=C rpmquery -plv "$f")"; then
+		FileError 'rpmquery failed' "$f"
+		return 1
+	fi
+	rpm_long_filelist="$(printf %s "$rpm_long_filelist" |LC_COLLATE=C sort -u)" || Fatal 'sort failed.'
+
+	if printf %s "$rpm_long_filelist" |egrep -e '^-..s(r|.w|...r|....w)|^-...((r.|.w)s|..s(r|.w))' >&2; then
+		FileError 'bad permissions for suid/sgid files' "$f"
+		rc=1
+	fi
+	if printf %s "$rpm_long_filelist" |egrep -e '^[^l]....(w|...w)[^/]+/usr/' >&2; then
+		FileError 'writable files in /usr/' "$f"
+		rc=1
+	fi
+	if printf %s "$rpm_long_filelist" |grep '^d......rwx' >&2; then
+		FileError 'world writable directories' "$f"
+		rc=1
+	fi
+	if [ "$package_type" = src ]; then
+		if printf %s "$rpm_long_filelist" |egrep -e '^-([^r]|.[^w])' >&2; then
+			FileError 'bad permissions in source archive' "$f"
+			rc=1
+		fi
+	fi
+
+	return $rc
+}
+
+run_check() {
+	if ! check_perms "$1"; then
+		Message 'ERROR: you have problems with file permissions'
+		return 1
+	fi
+}

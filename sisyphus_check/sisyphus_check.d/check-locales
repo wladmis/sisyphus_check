@@ -1,0 +1,26 @@
+#!/bin/sh -efu
+
+rpm_name="${rpm_name?RPM name required}"
+rpm_filelist="${rpm_filelist?RPM file list required}"
+
+# check locales not included into glibc-locales
+check_locales()
+{
+	local f="$1" && shift || return 1
+
+	# Do not check glibc-locales package.
+	[ "$rpm_name" != glibc-locales ] || return 0
+
+	local locales
+	if locales="$(printf %s "$rpm_filelist" |grep '^/usr/share/locale\(/[^/]\+\)\?$')"; then
+		FileError "files may belong to glibc-locales only: $(printf %s "$locales" |tr -s '[:space:]' ' ')" "$f"
+		return 1
+	fi
+}
+
+run_check() {
+	if ! check_locales "$1"; then
+		Message 'ERROR: you have problems with locale files'
+		return 1
+	fi
+}

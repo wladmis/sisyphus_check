@@ -1,0 +1,26 @@
+#!/bin/sh -efu
+
+package_type="${package_type?}"
+rpm_buildhost="${rpm_buildhost?RPM buildhost required}"
+
+# check for valid buildhost
+check_buildhost()
+{
+	local f="$1" && shift || return 1
+
+	# Do not check build host for source rpms.
+	[ "$package_type" != src ] || return 0
+
+	if ! printf %s "$rpm_buildhost" |egrep -qs '^[^.]+\.(hasher|sandman)\.altlinux\.org$'; then
+		FileError "wrong BUILDHOST: $rpm_buildhost" "$f"
+		return 1
+	fi
+	return 0
+}
+
+run_check() {
+	if ! check_buildhost "$1"; then
+		Message 'ERROR: you have problems with buildhost name'
+		return 1
+	fi
+}

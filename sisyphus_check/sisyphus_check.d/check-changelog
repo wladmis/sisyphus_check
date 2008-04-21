@@ -1,0 +1,61 @@
+#!/bin/sh -efu
+
+current_time="${current_time:-$(date +%s)}"
+packager_pattern="${packager_pattern?}"
+
+rpm_changelogtime="${rpm_changelogtime?RPM changelog time required}"
+rpm_changelogtext="${rpm_changelogtext?RPM changelog text required}"
+rpm_changelogname="${rpm_changelogname?RPM changelog name required}"
+
+rpm_serial="${rpm_serial?RPM serial required}"
+rpm_version="${rpm_version?RPM version required}"
+rpm_release="${rpm_release?RPM release required}"
+
+# check changelog format
+check_changelog()
+{
+	local f="$1" && shift || return 1
+	local rc=0
+
+	if ! [ "$((current_time+86400))" -ge "$rpm_changelogtime" ] 2>/dev/null; then
+		FileError "CHANGELOGTIME in the future: $(date -d "1970-01-01 UTC $rpm_changelogtime seconds")" "$f"
+		rc=1
+	fi
+
+	if ! printf %s "$rpm_changelogtext" |sed -e 's/[^[:alnum:]]//g' |grep -qsv '^$'; then
+		FileError "invalid CHANGELOGTEXT: $(printf %s "$rpm_changelogtext" |tr -s '[:space:]' ' ')" "$f"
+		rc=1
+	fi
+
+	if ! printf %s "$rpm_changelogname" |egrep -qs "$packager_pattern"; then
+		FileError "wrong packager in CHANGELOGNAME: $rpm_changelogname" "$f"
+		rc=1
+	fi
+
+	# Do not check changelog name for binary rpms.
+	if [ "$package_type" = src ]; then
+		local c_found
+		if ! c_found=`printf %s "$rpm_changelogname" |sed -ne '/^(none)$/q;s/[^<]\+<[^>]\+> *\(.\+\)$/\1/pg'`; then
+			FileError 'sed failed' "$f"
+			rc=1
+		fi
+
+		local c_expected
+		[ -z "$rpm_serial" ] && c_expected= || c_expected="$rpm_serial:"
+		c_expected="$c_expected$rpm_version-$rpm_release"
+
+		if [ "$c_expected" != "$c_found" ]; then
+			FileError "wrong CHANGELOGNAME: expected \"$c_expected\", found \"$c_found\"" "$f"
+			rc=1
+		fi
+	fi
+
+	return $rc
+}
+
+run_check() {
+	if ! check_changelog "$1"; then
+		Message 'ERROR: you have problems with changelog format'
+		return 1
+	fi
+}

@@ -1,0 +1,31 @@
+#!/bin/sh -efu
+
+rpm_name="${rpm_name?RPM name required}"
+rpm_filelist="${rpm_filelist?RPM file list required}"
+
+# check files intersections with known packages
+check_content()
+{
+	local f="$1" && shift || return 1
+	local rc=0
+	local bad
+
+	if [ "$rpm_name" != rpm ] && bad="$(printf %s "$rpm_filelist" |egrep -e '^/etc/rpm(/macros\.d)$')"; then
+		FileError "intersections with rpm: $(printf %s "$bad" |tr -s '[:space:]' ' ')" "$f"
+		rc=1
+	fi
+
+	if [ "$rpm_name" != control ] && bad="$(printf %s "$rpm_filelist" |egrep -e '^/etc/control\.d(/facilities)?$')"; then
+		FileError "intersections with control: $(printf %s "$bad" |tr -s '[:space:]' ' ')" "$f"
+		rc=1
+	fi
+
+	return $rc
+}
+
+run_check() {
+	if ! check_content "$1"; then
+		Message 'ERROR: you have problems with package content'
+		return 1
+	fi
+}

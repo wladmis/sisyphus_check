@@ -1,0 +1,124 @@
+#!/bin/sh -efu
+#
+# Copyright (C) 2003-2008  Stanislav Ievlev <inger@altlinux.org>,
+#                          Dmitry V. Levin <ldv@altlinux.org>,
+#                          Alexey Gladkov <legion@altlinux.org>
+#
+# The sisyphus_check utility.
+#
+# This file is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#
+
+unset \
+	LANG \
+	LANGUAGE \
+	LINGUAS \
+	LC_CTYPE \
+	LC_NUMERIC \
+	LC_TIME \
+	LC_COLLATE \
+	LC_MONETARY \
+	LC_MESSAGES \
+	LC_PAPER \
+	LC_NAME \
+	LC_ADDRESS \
+	LC_TELEPHONE \
+	LC_MEASUREMENT \
+	LC_IDENTIFICATION \
+	LC_ALL \
+	||:
+
+PROG="${0##*/}"
+
+Info()
+{
+	printf %s\\n "$PROG: $*" >&2
+}
+
+Fatal()
+{
+	printf %s\\n "$PROG: $*" >&2
+	exit 1
+}
+
+quiet=
+Message()
+{
+	[ -z "$quiet" ] || return 0
+	printf %s\\n "$*"
+}
+
+show_bad_files=
+FileError()
+{
+	local text="$1"
+	shift || return
+	local f="$1"
+
+	if [ -n "$f" ]; then
+		text="${text#$f: }"
+		text="$f: $text"
+		[ -z "$show_bad_files" ] || printf %s\\n "$f"
+	fi
+	printf %s\\n "$(printf %s "$text" |tr '[:cntrl:]' ' ')" >&2
+}
+
+fs_list=
+exit_handler()
+{
+	local rc=$?
+	trap - EXIT
+	[ -z "$fs_list" ] || rm -f -- "$fs_list"
+	exit $rc
+}
+
+current_time=
+packager_pattern=
+init_check()
+{
+	[ -z "$fs_list" ] || return 0
+
+	unset current_time packager_pattern
+	local fs_filelist
+
+	trap exit_handler HUP PIPE INT QUIT TERM EXIT
+	fs_list="$(mktemp -t "$PROG.XXXXXXXXXX")"
+
+	fs_filelist="$(LC_ALL=C rpmquery -l filesystem)" || Fatal 'rpmquery filesystem failed.'
+	printf %s "$fs_filelist" |LC_COLLATE=C sort -u >"$fs_list" || Fatal 'sort failed.'
+	current_time="$(date +%s)" || Fatal 'date failed.'
+	packager_pattern='<[^@]+(@| at )(packages\.)?altlinux(\.| dot )(com|net|org|ru)>'
+}
+
+package_type=
+get_package_type()
+{
+	local file header
+
+	package_type=
+	file="$1" && shift
+	header="$(od -A n -N 8 -t x1 -- "$file")" || return
+	case "$header" in
+	' ed ab ee db '??' '??' 00 00')
+		package_type=bin
+		return 0
+		;;
+	' ed ab ee db '??' '??' 00 01')
+		package_type=src
+		return 0
+		;;
+	esac
+	return 1;
+}

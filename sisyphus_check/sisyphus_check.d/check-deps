@@ -1,0 +1,42 @@
+#!/bin/sh -efu
+
+# check for inacceptable dependencies
+check_deps()
+{
+	local f="$1" && shift || return 1
+	local rc=0
+	local bad
+
+	if ! rpm_deps="$(LC_ALL=C rpmquery -p --requires --provides --obsoletes --conflicts "$f")"; then
+		FileError 'rpmquery failed' "$f"
+		rc=1
+		return $rc
+	fi
+
+	if ! rpm_requires="$(LC_ALL=C rpmquery -p --qf '[%{REQUIRENAME}\n]' "$f")"; then
+		FileError 'rpmquery failed' "$f"
+		rc=1
+		return $rc
+	fi
+
+	bad="$(printf %s "$rpm_deps" |grep '[$%]')"
+	if [ -n "$bad" ]; then
+		FileError "invalid dependencies: $(printf %s "$bad" |tr -s '[:space:]' ' ')" "$f"
+		rc=1
+	fi
+
+	bad="$(printf %s "$rpm_requires" |egrep '^(fileutils|initscripts|sh-utils|textutils|/etc/rc\.d/init\.d\((daemon|killproc|pidof)\)|pam_stack\.so)$')"
+	if [ -n "$bad" ]; then
+		FileError "forbidden requires: $(printf %s "$bad" |tr -s '[:space:]' ' ')" "$f"
+		rc=1
+	fi
+
+	return $rc
+}
+
+run_check() {
+	if ! check_deps "$1"; then
+		Message 'ERROR: you have problems with package dependencies'
+		return 1
+	fi
+}

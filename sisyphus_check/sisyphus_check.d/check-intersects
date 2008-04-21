@@ -1,0 +1,35 @@
+#!/bin/sh -efu
+
+rpm_name="${rpm_name?RPM name required}"
+rpm_filelist="${rpm_filelist?RPM file list required}"
+
+# check files intersections with filesystem
+check_intersects()
+{
+	local f="$1" && shift || return 1
+
+	# Do not check filesystem package.
+	[ "$rpm_name" != filesystem ] || return 0
+
+	local rc=0
+	local text
+
+	if ! text="$(printf %s\\n "$rpm_filelist" |LC_COLLATE=C comm -12 -- "$fs_list" -)"; then
+		FileError 'comm failed' "$f"
+		rc=1
+	fi
+
+	if [ -n "$text" ]; then
+		FileError "filesystem intersections: $(printf %s "$text" |tr -s '[:space:]' ' ')" "$f"
+		rc=1
+	fi
+
+	return $rc
+}
+
+run_check() {
+	if ! check_intersects "$1"; then
+		Message 'ERROR: you have package intersections'
+		return 1
+	fi
+}

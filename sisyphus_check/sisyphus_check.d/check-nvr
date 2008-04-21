@@ -1,0 +1,45 @@
+#!/bin/sh -efu
+
+rpm_arch="${rpm_arch?RPM arch required}"
+rpm_name="${rpm_name?RPM name required}"
+rpm_version="${rpm_version?RPM version required}"
+rpm_release="${rpm_release?RPM release required}"
+
+# check for valid nvr
+check_nvr()
+{
+	local f="$1" && shift || return 1
+	local rc=0
+
+	if printf %s "$rpm_version" |grep -qs '[%<=>]'; then
+		FileError "invalid package VERSION: $rpm_version" "$f"
+		rc=1
+	fi
+
+	if printf %s "$rpm_release" |grep -qs '[%<=>]'; then
+		FileError "invalid package RELEASE: $rpm_release" "$f"
+		rc=1
+	fi
+
+	if ! printf %s "$rpm_release" |egrep -qs '^alt([1-9]|0.)'; then
+		FileError "invalid package RELEASE: $rpm_release" "$f"
+		rc=1
+	fi
+
+	local arch="$rpm_arch"
+	[ "$package_type" != src ] || arch="src"
+	local expected="$rpm_name-$rpm_version-$rpm_release.$arch.rpm"
+	if [ "$expected" != "${f##*/}" ]; then
+		FileError "invalid FILENAME: $expected expected" "$f"
+		rc=1
+	fi
+
+	return $rc
+}
+
+run_check() {
+	if ! check_nvr "$1"; then
+		Message 'ERROR: you have problems with package name-version-release format'
+		return 1
+	fi
+}

@@ -1,0 +1,22 @@
+#!/bin/sh -efu
+
+rpm_description="${rpm_description?RPM description required}"
+
+# check for valid description
+check_description()
+{
+	local f="$1" && shift || return 1
+
+	if ! printf %s "$rpm_description" |egrep -qs '[[:alpha:]]'; then
+		FileError "invalid DESCRIPTION: $(printf %s "$rpm_description" |tr -s '[:space:]' ' ')" "$f"
+		return 1
+	fi
+	return 0
+}
+
+run_check() {
+	if ! check_description "$1"; then
+		Message 'ERROR: you have problems with package description'
+		return 1
+	fi
+}

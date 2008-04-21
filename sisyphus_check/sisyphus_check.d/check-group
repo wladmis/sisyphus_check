@@ -1,0 +1,22 @@
+#!/bin/sh -efu
+
+rpm_group="${rpm_group?RPM group required}"
+
+# check for valid group
+check_group()
+{
+	local f="$1" && shift || return 1
+
+	if ! fgrep -xq "$rpm_group" /usr/lib/rpm/GROUPS; then
+		FileError "wrong GROUP: $rpm_group" "$f"
+		return 1
+	fi
+	return 0
+}
+
+run_check() {
+	if ! check_group "$1"; then
+		Message 'ERROR: you have problems with package group'
+		return 1
+	fi
+}

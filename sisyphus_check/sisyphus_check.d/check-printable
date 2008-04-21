@@ -1,0 +1,34 @@
+#!/bin/sh -efu
+
+rpm_name="${rpm_name?RPM name required}"
+rpm_version="${rpm_version?RPM version required}"
+rpm_release="${rpm_release?RPM release required}"
+rpm_group="${rpm_group?RPM group required}"
+rpm_packager="${rpm_packager?RPM packager required}"
+rpm_license="${rpm_license?RPM license required}"
+rpm_summary="${rpm_summary?RPM summary required}"
+rpm_description="${rpm_description?RPM description required}"
+rpm_changelogname="${rpm_changelogname?RPM changelog name required}"
+rpm_changelogtext="${rpm_changelogtext?RPM changelog text required}"
+
+# check for printable summary, description, etc.
+check_printable()
+{
+	local f="$1" && shift || return 1
+	local text
+
+	text="$rpm_name $rpm_version $rpm_release $rpm_group $rpm_packager $rpm_license $rpm_summary $rpm_description $rpm_changelogname $rpm_changelogtext"
+
+	if [ -n "$(printf %s "$text" |LC_ALL=C tr -d '[:print:][:space:]')" ]; then
+		FileError "unprintable package information: $(printf %s "$text" |LC_ALL=C tr -d '[:print:][:space:]')" "$f"
+		return 1
+	fi
+	return 0
+}
+
+run_check() {
+	if ! check_printable "$1"; then
+		Message 'ERROR: you have problems with package information'
+		return 1
+	fi
+}
