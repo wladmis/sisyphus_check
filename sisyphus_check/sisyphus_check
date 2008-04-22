@@ -41,6 +41,10 @@ run_checks() {
 	local rc=0 check check_var
 
 	for check in $check_list; do
+
+		[ -s "$sisyphus_check_d/$check" ] ||
+			Fatal "$f: file not found or empty"
+
 		check_var="$(printf '%s' "no_check_$check" |tr - _)"
 
 		if eval "[ -z \"\${$check_var-}\" ]"; then
