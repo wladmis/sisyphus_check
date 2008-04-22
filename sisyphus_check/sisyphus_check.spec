@@ -22,7 +22,7 @@ This package contains sisyphus_check utility.
 %install
 install -pD -m644 fhs %buildroot%_sysconfdir/%name/fhs
 install -pD -m755 %name %buildroot%_bindir/%name
-install -pD -m755 sisyphus-check-functions %buildroot%_bindir/sisyphus-check-functions
+install -pD -m644 sisyphus-check-functions %buildroot%_bindir/sisyphus-check-functions
 
 mkdir -p -- %buildroot%_sysconfdir/
 cp -a -- sisyphus_check.d %buildroot%_sysconfdir/%name/check.d
