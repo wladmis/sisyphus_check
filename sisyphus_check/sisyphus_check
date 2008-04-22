@@ -29,8 +29,6 @@ check_list='check-changelog check-gpg check-buildhost check-buildtime check-pack
 check-printable check-summary check-description check-group check-nvr check-deps
 check-content check-libtool check-fhs check-perms check-intersects check-locales'
 
-trust_gpg_names='security incominger'
-package_type=
 recurse_subdir=
 files=
 

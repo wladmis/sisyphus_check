@@ -1,6 +1,6 @@
 #!/bin/sh -efu
 
-trust_gpg_names="${trust_gpg_names-}"
+trust_gpg_names="${trust_gpg_names:-security incominger}"
 no_gpgname_packagers="${no_gpgname_packagers-}"
 
 rpm_siggpg="${rpm_siggpg?RPM siggpg required}"
