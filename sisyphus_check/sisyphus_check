@@ -58,7 +58,7 @@ check_files()
 	init_check || Fatal 'init_check failed.'
 
 	local f rc=0
-	for f in "$@"; do
+	for f; do
 		if [ ! -f "$f" ]; then
 			FileError 'not a regular file' "$f"
 			rc=1
@@ -143,12 +143,12 @@ check_dirs()
 
 	# quick arg check.
 	local d
-	for d in "$@"; do
+	for d; do
 		[ -d "$d" ] || { FileError "$d: not a directory"; rc=1; continue; }
 	done
 	[ $rc = 0 ] || return $rc
 
-	for d in "$@"; do
+	for d; do
 		[ -d "$d" ] || { FileError "$d: not a directory"; rc=1; continue; }
 		local filelist f
 		if [ -n "$recurse_subdir" ]; then
