@@ -165,7 +165,8 @@ check_dirs()
 	return $rc
 }
 
-get_check_list() {
+get_check_list()
+{
 	find "$sisyphus_check_d" \
 		-regextype posix-egrep \
 		-mindepth 1 \
