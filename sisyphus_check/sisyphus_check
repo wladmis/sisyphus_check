@@ -31,22 +31,21 @@ files=
 
 # cummulative check
 fast_check=
-run_checks() {
+run_checks()
+{
 	local f="$1" && shift || return 1
 	local rc=0 check check_var
 
 	for check in $check_list; do
-
 		[ -s "$sisyphus_check_d/$check" ] ||
 			Fatal "$f: file not found or empty"
 
 		check_var="$(printf '%s' "no_check_$check" |tr - _)"
+		eval "[ -z \"\${$check_var-}\" ]" || continue
 
-		if eval "[ -z \"\${$check_var-}\" ]"; then
-			if ! (. "$sisyphus_check_d/$check" && run_check "$f"); then
-				[ -z "$fast_check" ] || return 1
-				rc=1
-			fi
+		if ! (. "$sisyphus_check_d/$check" && run_check "$f"); then
+			[ -z "$fast_check" ] || return 1
+			rc=1
 		fi
 	done
 
@@ -135,7 +134,6 @@ rpm_version=%{version:shescape};
 
 	return $rc
 }
-
 
 check_dirs()
 {
