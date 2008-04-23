@@ -65,7 +65,7 @@ FileError()
 {
 	local text="$1"
 	shift || return
-	local f="$1"
+	local f="${1-}"
 
 	if [ -n "$f" ]; then
 		text="${text#$f: }"

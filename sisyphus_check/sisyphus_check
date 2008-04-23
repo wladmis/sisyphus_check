@@ -40,7 +40,7 @@ run_checks()
 		[ -s "$sisyphus_check_d/$check" ] ||
 			Fatal "$f: file not found or empty"
 
-		check_var="$(printf '%s' "no_check_$check" |tr - _)"
+		check_var="no_check_${check#*-check-}"
 		eval "[ -z \"\${$check_var-}\" ]" || continue
 
 		if ! (. "$sisyphus_check_d/$check" && run_check "$f"); then
@@ -170,7 +170,7 @@ get_check_list()
 		-mindepth 1 \
 		-maxdepth 1 \
 		-type f \
-		-regex '.*/[0-9]+-check-[[:alnum:]_-]+' \
+		-regex '.*/[0-9]+-check-[[:alpha:]]+' \
 		-printf '%f\n'
 }
 
@@ -226,12 +226,11 @@ while :; do
 				show_usage
 			fi
 			for arg in `printf %s "$1" |tr , ' '`; do
-				name="no_check_$arg"
-				if ! echo "$check_env" |grep -qs "^$name\$"; then
+				if ! printf '%s' "$check_env" |grep -qs "^check-$arg\$"; then
 					Info "$mode: invalid argument: $arg"
 					show_usage
 				fi
-				eval $name=$check_value
+				eval no_check_$arg=$check_value
 			done
 			;;
 		--check-|--no-check-) show_usage
