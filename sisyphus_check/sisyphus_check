@@ -128,7 +128,7 @@ rpm_version=%{version:shescape};
 			rc=1
 			continue
 		fi
-		rpm_filelist="$(printf %s "$rpm_filelist" |LC_COLLATE=C sort -u)" || Fatal 'sort failed.'
+		rpm_filelist="$(printf %s "$rpm_filelist" |LC_COLLATE=C sort -u)"
 
 		run_checks "$f"
 	done
