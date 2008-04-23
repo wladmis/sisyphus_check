@@ -190,18 +190,20 @@ sisyphus_check - check packages for acceptability for Sisyphus.
 This program is free software, covered by the GNU General Public License.
 sisyphus_check comes with ABSOLUTELY NO WARRANTY, see license for details.
 
-Usage: $PROG [options] <directory>...
+Usage: $PROG [options] <target>...
 
 Valid options are:
-  --quiet
-  --verbose
-  --fast-check
-  --files
-  --directories
-  --recursive
-  --show-bad-files
-  --trust-gpg-names=LIST
-  --[no-]check=LIST
+  --quiet                  try to be more quiet;
+  --verbose                print a message for each action;
+  --fast-check             stop checking after first error;
+  --files                  treat <target> as a packages;
+  --directories            treat <target> as a directory. Packages in this
+                           directory will be checked. This is default
+                           behavior;
+  --recursive              search packages recursively;
+  --show-bad-files         print bad packages;
+  --trust-gpg-names=LIST   change the list of trusted gpg names;
+  --[no-]check=LIST        change the list of checks;
 EOF
 	printf %s\\n "$check_env" |sed -ne 's/.*/  --[no-]&/pg'
 	exit
