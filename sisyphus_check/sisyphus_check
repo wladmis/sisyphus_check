@@ -95,6 +95,8 @@ rpm_summary=%{summary:shescape};
 rpm_url=%{url:shescape};
 rpm_vendor=%{vendor:shescape};
 rpm_version=%{version:shescape};
+rpm_filelist=[%{filenames:shescape}"
+"];
 			' -- "$f")"; then
 			FileError 'rpmquery failed' "$f"
 			rc=1
@@ -108,17 +110,12 @@ rpm_version=%{version:shescape};
 		local rpm_packager rpm_platform rpm_release rpm_serial
 		local rpm_size rpm_sourcerpm rpm_summary rpm_url
 		local rpm_vendor rpm_version
+		local rpm_filelist
 
 		eval "$values"
 		unset values
 
-		local rpm_filelist
-
-		if ! rpm_filelist="$(LC_ALL=C rpmquery -pl "$f")"; then
-			FileError 'rpmquery failed' "$f"
-			rc=1
-			continue
-		fi
+		[ -z "$rpm_filelist" ] ||
 		rpm_filelist="$(printf %s "$rpm_filelist" |LC_COLLATE=C sort -u)"
 
 		run_checks "$f"
