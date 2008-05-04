@@ -16,8 +16,8 @@
 
 find_unpackaged_subdirs()
 {
-	[ -n "${rpm_filelist?}" ] || return 0
-	printf '%s\n' "$rpm_filelist" |awk '
+	[ -n "${rpm_filenames?}" ] || return 0
+	printf '%s\n' "$rpm_filenames" |awk '
 		/^\// {
 			OWN[$0] = 1
 		}

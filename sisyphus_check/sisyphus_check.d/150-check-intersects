@@ -1,7 +1,7 @@
 #!/bin/sh -efu
 
 rpm_name="${rpm_name?RPM name required}"
-rpm_filelist="${rpm_filelist?RPM file list required}"
+rpm_filenames="${rpm_filenames?RPM file list required}"
 
 # check files intersections with filesystem
 check_intersects()
@@ -14,7 +14,7 @@ check_intersects()
 	local rc=0
 	local text
 
-	if ! text="$(printf %s\\n "$rpm_filelist" |LC_COLLATE=C comm -12 -- "$fs_list" -)"; then
+	if ! text="$(printf %s\\n "$rpm_filenames" |LC_COLLATE=C comm -12 -- "$fs_list" -)"; then
 		FileError 'comm failed' "$f"
 		rc=1
 	fi

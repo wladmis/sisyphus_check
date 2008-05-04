@@ -3,7 +3,7 @@
 fhs_config='/etc/sisyphus_check/fhs'
 
 rpm_name="${rpm_name?RPM name required}"
-rpm_filelist="${rpm_filelist?RPM file list required}"
+rpm_filenames="${rpm_filenames?RPM file list required}"
 
 # check for FHS-2.2 violations
 check_fhs()
@@ -14,7 +14,7 @@ check_fhs()
 	# Do not check filesystem package.
 	[ "$rpm_name" != filesystem ] || return 0
 
-	list=$(printf %s "$rpm_filelist" |grep -e '^/')
+	list=$(printf %s "$rpm_filenames" |grep -e '^/')
 	[ -n "$list" ] || return 0
 
 	pattern="$(grep '^[^#]' "$fhs_config" |

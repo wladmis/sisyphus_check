@@ -17,7 +17,7 @@ check_pkgconfig()
 	esac
 
 	local bad_files
-	if bad_files=$(printf '%s\n' "$rpm_filelist" |egrep "$bad_dirs"); then
+	if bad_files=$(printf '%s\n' "$rpm_filenames" |egrep "$bad_dirs"); then
 		FileError "invalid $rpm_arch pkg-config path: $(printf %s "$bad_files" |tr -s '[:space:]' ' ')" "$f"
 		return 1
 	fi
