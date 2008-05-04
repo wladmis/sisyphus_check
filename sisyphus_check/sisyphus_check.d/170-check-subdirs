@@ -1,0 +1,72 @@
+#!/bin/sh -efu
+#
+# Check that directory packaging is hierarchically consistent.
+#
+# E.g. consider this %files section:
+#	%dir /A
+#	/A/B/C/D
+# Now we require that directories "/A/B" and "/A/B/C" are also packaged.
+#
+# Copyright (C) 2008  Alexey Tourbin <at@altlinux.org>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+
+find_unpackaged_subdirs()
+{
+	[ -n "${rpm_filelist?}" ] || return 0
+	printf '%s\n' "$rpm_filelist" |awk '
+		/^\// {
+			OWN[$0] = 1
+		}
+		function check_path(path) {
+			# "/A/B/C/D" -> ["","A","B","C","D"]
+			n = split(path, comp, "/")
+			# find shortest prefix which is owned by the package,
+			# i.e. either "/A" or "/A/B" (or none - no need to check "/A/B/C").
+			prefix = ""
+			for (i = 2; i < n-1; i++) {
+				prefix = prefix "/" comp[i]
+				if (prefix in OWN)
+					break
+			}
+			if (!prefix)
+				return
+			# check if every subdir under the prefix is also owned
+			subdir = prefix
+			for (j = i+1; j < n; j++) {
+				subdir = subdir "/" comp[j]
+				if (!(subdir in OWN))
+					printf "%s\t%s\t%s\n", prefix, subdir, path
+			}
+		}
+		END {
+			for (path in OWN)
+				check_path(path)
+		}'
+}
+
+check_subdirs()
+{
+	local f="$1"; shift || return
+	local subdirs="$(find_unpackaged_subdirs)"
+	[ -n "$subdirs" ] || return 0
+	local tab="$(printf '\t')"
+	subdirs=$(printf '%s\n' "$subdirs" |sort -t "$tab" -u -k2,2)
+	local prefix subdir path
+	printf '%s\n' "$subdirs" |
+	while IFS="$tab" read -r prefix subdir path; do
+		FileError "unpackaged directory: $subdir" "$f"
+	done
+	return 1
+}
+
+run_check()
+{
+	if ! check_subdirs "$1"; then
+		Message 'ERROR: you have problems!'
+		return 1
+	fi
+}
