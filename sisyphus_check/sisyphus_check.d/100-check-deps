@@ -16,26 +16,15 @@ check_deps()
 	local rc=0
 	local bad
 
-	if ! rpm_deps="$(LC_ALL=C rpmquery -p --requires --provides --obsoletes --conflicts "$f")"; then
-		FileError 'rpmquery failed' "$f"
-		rc=1
-		return $rc
-	fi
+	local rpm_deps
+	rpm_deps=$(printf '%s\n%s\n%s\n%s\n' "$rpm_requires" "$rpm_provides" "$rpm_obsoletes" "$rpm_conflicts")
 
-	if ! rpm_requires="$(LC_ALL=C rpmquery -p --qf '[%{REQUIRENAME}\n]' "$f")"; then
-		FileError 'rpmquery failed' "$f"
-		rc=1
-		return $rc
-	fi
-
-	bad="$(printf %s "$rpm_deps" |grep '[$%]')"
-	if [ -n "$bad" ]; then
+	if bad=$(printf %s "$rpm_deps" |grep '[$%]'); then
 		FileError "invalid dependencies: $(printf %s "$bad" |tr -s '[:space:]' ' ')" "$f"
 		rc=1
 	fi
 
-	bad="$(printf %s "$rpm_requires" |egrep -x "$bad_deps")"
-	if [ -n "$bad" ]; then
+	if bad=$(printf %s "$rpm_requires" |cut -d' ' -f1 |egrep -x "$bad_deps"); then
 		FileError "forbidden requires: $(printf %s "$bad" |tr -s '[:space:]' ' ')" "$f"
 		rc=1
 	fi

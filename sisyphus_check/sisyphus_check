@@ -97,6 +97,14 @@ rpm_vendor=%{vendor:shescape};
 rpm_version=%{version:shescape};
 rpm_filenames=[%{filenames:shescape}"
 "];
+rpm_requires=[%{requirename:shescape}" %{requireflags:depflags} "%{requireversion:shescape}"
+"];
+rpm_provides=[%{providename:shescape}" %{provideflags:depflags} "%{provideversion:shescape}"
+"];
+rpm_obsoletes=[%{obsoletename:shescape}" %{obsoleteflags:depflags} "%{obsoleteversion:shescape}"
+"];
+rpm_conflicts=[%{conflictname:shescape}" %{conflictflags:depflags} "%{conflictversion:shescape}"
+"];
 			' -- "$f")"; then
 			FileError 'rpmquery failed' "$f"
 			rc=1
@@ -111,12 +119,18 @@ rpm_filenames=[%{filenames:shescape}"
 		local rpm_size rpm_sourcerpm rpm_summary rpm_url
 		local rpm_vendor rpm_version
 		local rpm_filenames
+		local rpm_requires rpm_provides rpm_obsoletes rpm_conflicts
 
 		eval "$values"
 		unset values
 
 		[ -z "$rpm_filenames" ] ||
-		rpm_filenames="$(printf %s "$rpm_filenames" |LC_COLLATE=C sort -u)"
+			rpm_filenames="$(printf %s "$rpm_filenames" |sort -u)"
+
+		rpm_requires="$(printf %s "$rpm_requires" |sed -e 's/ *$//' |sort -u)"
+		rpm_provides="$(printf %s "$rpm_provides" |sed -e 's/ *$//' |sort -u)"
+		[ -z "$rpm_obsoletes" ] || rpm_obsoletes="$(printf %s "$rpm_obsoletes" |sed -e 's/ *$//' |sort -u)"
+		[ -z "$rpm_conflicts" ] || rpm_conflicts="$(printf %s "$rpm_conflicts" |sed -e 's/ *$//' |sort -u)"
 
 		run_checks "$f"
 	done
