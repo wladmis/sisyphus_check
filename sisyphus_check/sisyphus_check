@@ -72,14 +72,6 @@ check_files()
 
 		local values
 
-		if ! values="$(LC_ALL=C rpmquery -p --qf= -- "$f" 2>&1)" ||
-		   [ -n "$values" ]; then
-			printf >&2 %s\\n "$values"
-			FileError 'rpmquery failed' "$f"
-			rc=1
-			continue
-		fi
-
 		if ! values="$(LC_ALL=C rpmquery -p --qf='
 rpm_arch=%{arch:shescape};
 rpm_buildhost=%{buildhost:shescape};
