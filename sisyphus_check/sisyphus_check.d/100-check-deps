@@ -1,5 +1,12 @@
 #!/bin/sh -efu
 
+bad_deps='fileutils
+sh-utils
+textutils
+initscripts
+/etc/rc\.d/init\.d\((daemon|killproc|pidof)\)
+pam_stack\.so'
+
 # check for inacceptable dependencies
 check_deps()
 {
@@ -25,7 +32,7 @@ check_deps()
 		rc=1
 	fi
 
-	bad="$(printf %s "$rpm_requires" |egrep '^(fileutils|initscripts|sh-utils|textutils|/etc/rc\.d/init\.d\((daemon|killproc|pidof)\)|pam_stack\.so)$')"
+	bad="$(printf %s "$rpm_requires" |egrep -x "$bad_deps")"
 	if [ -n "$bad" ]; then
 		FileError "forbidden requires: $(printf %s "$bad" |tr -s '[:space:]' ' ')" "$f"
 		rc=1
