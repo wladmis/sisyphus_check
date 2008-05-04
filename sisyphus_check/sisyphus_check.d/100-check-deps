@@ -3,6 +3,7 @@
 bad_deps='fileutils
 sh-utils
 textutils
+XFree86-.*
 initscripts
 /etc/rc\.d/init\.d\((daemon|killproc|pidof)\)
 /etc/init\.d\(.*\)
