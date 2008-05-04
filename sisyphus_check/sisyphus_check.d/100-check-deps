@@ -5,6 +5,7 @@ sh-utils
 textutils
 initscripts
 /etc/rc\.d/init\.d\((daemon|killproc|pidof)\)
+/etc/init\.d\(.*\)
 pam_stack\.so'
 
 # check for inacceptable dependencies
