@@ -26,7 +26,7 @@ check_pkgconfig()
 run_check()
 {
 	if ! check_pkgconfig "$1"; then
-		Message 'ERROR: you have problems!'
+		Message 'ERROR: you have problems with pkg-config files'
 		return 1
 	fi
 }
