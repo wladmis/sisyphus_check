@@ -16,7 +16,7 @@ check_summary()
 
 run_check() {
 	if ! check_summary "$1"; then
-		Message 'ERROR: you have problems with package summary'
+		Message 'ERROR: fatal problems with package summary'
 		return 1
 	fi
 }

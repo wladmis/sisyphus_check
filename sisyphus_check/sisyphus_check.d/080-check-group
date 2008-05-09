@@ -16,7 +16,7 @@ check_group()
 
 run_check() {
 	if ! check_group "$1"; then
-		Message 'ERROR: you have problems with package group'
+		Message 'ERROR: fatal problems with package group'
 		return 1
 	fi
 }

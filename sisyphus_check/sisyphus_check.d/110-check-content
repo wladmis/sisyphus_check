@@ -25,7 +25,7 @@ check_content()
 
 run_check() {
 	if ! check_content "$1"; then
-		Message 'ERROR: you have problems with package content'
+		Message 'ERROR: fatal problems with package content'
 		return 1
 	fi
 }

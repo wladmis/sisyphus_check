@@ -55,7 +55,7 @@ check_changelog()
 
 run_check() {
 	if ! check_changelog "$1"; then
-		Message 'ERROR: you have problems with changelog format'
+		Message 'ERROR: fatal problems with changelog format'
 		return 1
 	fi
 }

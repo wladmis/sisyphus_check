@@ -17,7 +17,7 @@ check_buildtime()
 
 run_check() {
 	if ! check_buildtime "$1"; then
-		Message 'ERROR: you have problems with buildtime'
+		Message 'ERROR: fatal problems with buildtime'
 		return 1
 	fi
 }

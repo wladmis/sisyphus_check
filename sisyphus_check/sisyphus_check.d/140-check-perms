@@ -38,7 +38,7 @@ check_perms()
 
 run_check() {
 	if ! check_perms "$1"; then
-		Message 'ERROR: you have problems with file permissions'
+		Message 'ERROR: fatal problems with file permissions'
 		return 1
 	fi
 }

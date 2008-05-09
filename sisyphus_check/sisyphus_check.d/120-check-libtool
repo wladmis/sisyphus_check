@@ -21,7 +21,7 @@ run_check() {
 	return 0 # Check disabled for a while
 
 	if ! check_libtool "$1"; then
-		Message 'ERROR: you have problems with libtool files'
+		Message 'ERROR: fatal problems with libtool files'
 		return 1
 	fi
 }

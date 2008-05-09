@@ -20,7 +20,7 @@ check_locales()
 
 run_check() {
 	if ! check_locales "$1"; then
-		Message 'ERROR: you have problems with locale files'
+		Message 'ERROR: fatal problems with locale files'
 		return 1
 	fi
 }

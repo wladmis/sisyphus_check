@@ -34,7 +34,7 @@ check_deps()
 
 run_check() {
 	if ! check_deps "$1"; then
-		Message 'ERROR: you have problems with package dependencies'
+		Message 'ERROR: fatal problems with package dependencies'
 		return 1
 	fi
 }
