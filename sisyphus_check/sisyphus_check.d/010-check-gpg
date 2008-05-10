@@ -6,11 +6,12 @@ no_gpgname_packagers="${no_gpgname_packagers-}"
 rpm_siggpg="${rpm_siggpg?RPM siggpg required}"
 rpm_packager="${rpm_packager?RPM packager required}"
 rpm_changelogname="${rpm_changelogname?RPM changelog name required}"
+rpm_signature=
 
 check_gpg()
 {
 	local f="$1" && shift || return 1
-	local rpm_signature bads=
+	local bads=
 
 	if [ -z "$rpm_siggpg" ]; then
 		FileError 'signature not found' "$f"
