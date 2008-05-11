@@ -81,12 +81,21 @@ CheckError()
 }
 
 fs_list=
-exit_handler()
+cleanup()
 {
-	local rc=$?
 	trap - EXIT
 	[ -z "$fs_list" ] || rm -f -- "$fs_list"
-	exit $rc
+	exit "$@"
+}
+
+exit_handler()
+{
+	cleanup $?
+}
+
+signal_handler()
+{
+	cleanup 1
 }
 
 current_time=
@@ -98,7 +107,8 @@ init_check()
 	unset current_time packager_pattern
 	local fs_filelist
 
-	trap exit_handler HUP PIPE INT QUIT TERM EXIT
+	trap exit_handler EXIT
+	trap signal_handler HUP PIPE INT QUIT TERM
 	fs_list="$(mktemp -t "$PROG.XXXXXXXXXX")"
 
 	fs_filelist="$(LC_ALL=C rpmquery -l filesystem)" || Fatal 'rpmquery filesystem failed.'
