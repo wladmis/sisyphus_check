@@ -132,7 +132,7 @@ rpm_conflicts=[%{conflictname:shescape}" %{conflictflags:depflags} "%{conflictve
 		[ -z "$rpm_obsoletes" ] || rpm_obsoletes="$(printf %s "$rpm_obsoletes" |sed -e 's/ *$//' |sort -u)"
 		[ -z "$rpm_conflicts" ] || rpm_conflicts="$(printf %s "$rpm_conflicts" |sed -e 's/ *$//' |sort -u)"
 
-		run_checks "$f"
+		run_checks "$f" || rc=1
 	done
 
 	return $rc
