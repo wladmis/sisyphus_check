@@ -20,7 +20,7 @@ check_buildhost()
 
 run_check() {
 	if ! check_buildhost "$1"; then
-		Message 'ERROR: fatal problems with buildhost name'
+		CheckError 'buildhost name violation'
 		return 1
 	fi
 }

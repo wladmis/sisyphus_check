@@ -29,7 +29,7 @@ check_intersects()
 
 run_check() {
 	if ! check_intersects "$1"; then
-		Message 'ERROR: fatal package intersections'
+		CheckError 'intersections with system packages'
 		return 1
 	fi
 }

@@ -9,7 +9,7 @@ initscripts
 /etc/init\.d\(.*\)
 pam_stack\.so'
 
-# check for inacceptable dependencies
+# check for unacceptable dependencies
 check_deps()
 {
 	local f="$1" && shift || return 1
@@ -34,7 +34,7 @@ check_deps()
 
 run_check() {
 	if ! check_deps "$1"; then
-		Message 'ERROR: fatal problems with package dependencies'
+		CheckError 'package dependencies violation'
 		return 1
 	fi
 }

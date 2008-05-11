@@ -20,7 +20,7 @@ check_locales()
 
 run_check() {
 	if ! check_locales "$1"; then
-		Message 'ERROR: fatal problems with locale files'
+		CheckError 'locale subdirectories violation'
 		return 1
 	fi
 }

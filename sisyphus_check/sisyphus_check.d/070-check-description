@@ -16,7 +16,7 @@ check_description()
 
 run_check() {
 	if ! check_description "$1"; then
-		Message 'ERROR: fatal problems with package description'
+		CheckError 'invalid package description'
 		return 1
 	fi
 }

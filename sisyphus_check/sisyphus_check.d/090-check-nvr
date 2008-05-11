@@ -39,7 +39,7 @@ check_nvr()
 
 run_check() {
 	if ! check_nvr "$1"; then
-		Message 'ERROR: fatal problems with package name-version-release format'
+		CheckError 'package name-version-release format violation'
 		return 1
 	fi
 }

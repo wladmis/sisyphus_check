@@ -2,7 +2,7 @@
 
 rpm_filenames="${rpm_filenames?RPM file list required}"
 
-# check files intersections with known packages
+# check for forbidden libtool files
 check_libtool()
 {
 	local f="$1" && shift || return 1
@@ -21,7 +21,7 @@ run_check() {
 	return 0 # Check disabled for a while
 
 	if ! check_libtool "$1"; then
-		Message 'ERROR: fatal problems with libtool files'
+		CheckError 'libtool files violation'
 		return 1
 	fi
 }

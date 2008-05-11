@@ -37,7 +37,7 @@ check_fhs()
 
 run_check() {
 	if ! check_fhs "$1"; then
-		Message 'ERROR: fatal problems with standards'
+		CheckError 'FHS violation'
 		return 1
 	fi
 }

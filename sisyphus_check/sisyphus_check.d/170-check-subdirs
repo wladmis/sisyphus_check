@@ -69,7 +69,7 @@ check_subdirs()
 run_check()
 {
 	if ! check_subdirs "$1"; then
-		Message 'ERROR: fatal problems with directory packaging'
+		CheckError 'subdirectories packaging violation'
 		return 1
 	fi
 }

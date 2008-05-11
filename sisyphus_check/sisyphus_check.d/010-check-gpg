@@ -80,13 +80,13 @@ run_check() {
 	local rc=0 skip_check_gpgname=
 
 	if ! check_gpg "$1"; then
-		Message 'ERROR: fatal problems with package signatures'
+		CheckError 'package signatures violation'
 		skip_check_gpgname=1
 		rc=1
 	fi
 
 	if ! check_gpgname "$1"; then
-		Message 'ERROR: fatal signature/changelog mismatch'
+		CheckError 'signature/changelog mismatch'
 		rc=1
 	fi
 

@@ -28,7 +28,7 @@ check_printable()
 
 run_check() {
 	if ! check_printable "$1"; then
-		Message 'ERROR: fatal problems with package information'
+		CheckError 'package information violation'
 		return 1
 	fi
 }

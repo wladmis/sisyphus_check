@@ -17,7 +17,7 @@ check_packager()
 
 run_check() {
 	if ! check_packager "$1"; then
-		Message 'ERROR: fatal problems with packager name'
+		CheckError 'packager name violation'
 		return 1
 	fi
 }

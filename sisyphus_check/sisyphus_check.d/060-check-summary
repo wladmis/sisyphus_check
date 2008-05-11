@@ -16,7 +16,7 @@ check_summary()
 
 run_check() {
 	if ! check_summary "$1"; then
-		Message 'ERROR: fatal problems with package summary'
+		CheckError 'invalid package summary'
 		return 1
 	fi
 }
