@@ -1,5 +1,5 @@
 Name: sisyphus_check
-Version: 0.7.22
+Version: 0.8.0
 Release: alt1
 
 Summary: package checker for Sisyphus
@@ -33,6 +33,16 @@ cp -a -- sisyphus_check.d %buildroot%_sysconfdir/%name/check.d
 %_bindir/*
 
 %changelog
+* Sun May 11 2008 Dmitry V. Levin <ldv@altlinux.org> 0.8.0-alt1
+- Factored out tests to %_sysconfdir/%name/check.d directory (legion).
+- Added options descriptions (legion).
+- check-deps: Added more forbidden patterns (at).
+- check-subdirs: New check for unpackaged subdirectories (at).
+- check-pkgconfig: New check for invalid pkg-config pathnames (at).
+- Optimized rpmquery invocations (at).
+- Enhanced error summaries.
+- Fixed signal handler.
+
 * Thu Mar 20 2008 Dmitry V. Levin <ldv@altlinux.org> 0.7.22-alt1
 - fhs: Added dev-minimal (mike, #14889).
 
