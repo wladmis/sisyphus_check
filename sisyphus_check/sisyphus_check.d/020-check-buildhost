@@ -12,7 +12,7 @@ check_buildhost()
 	[ "$package_type" != src ] || return 0
 
 	if ! printf %s "$rpm_buildhost" |egrep -qs '^[^.]+\.(hasher|sandman)\.altlinux\.org$'; then
-		FileError "wrong BUILDHOST: $rpm_buildhost" "$f"
+		FileError "unacceptable BUILDHOST: $rpm_buildhost" "$f"
 		return 1
 	fi
 	return 0
@@ -20,7 +20,7 @@ check_buildhost()
 
 run_check() {
 	if ! check_buildhost "$1"; then
-		CheckError 'buildhost name violation'
+		CheckError 'unacceptable non-hasher buildhost name'
 		return 1
 	fi
 }
