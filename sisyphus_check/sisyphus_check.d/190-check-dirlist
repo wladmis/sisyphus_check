@@ -1,0 +1,52 @@
+#!/bin/sh -efu
+#
+# Check directory ownership with respect to
+# /usr/lib/rpm/*-files.req.list dirlists.
+#
+# Copyright (C) 2008  Alexey Tourbin <at@altlinux.org>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+
+dirlist=$(set +f; grep -h ^/. /usr/lib/rpm/*-files.req.list |sort -ur)
+dirs=$(printf '%s\n' "$dirlist" |
+	while read -r d pkg; do echo "${d%/}"; done)
+
+find_captured_dirs()
+{
+	local mydirs="$(printf '%s\n' "$rpm_filenames" |fgrep -x "$dirs")"
+	[ -n "$mydirs" ] || return 0
+	printf '%s\n' "$mydirs" |
+	while read -r mydir; do
+		printf '%s\n' "$dirlist" |
+		while read -r dir pkg; do
+			[ "$mydir" = "$dir" ] || continue
+			[ -n "$pkg" ] || continue
+			printf '%s\n' "$rpm_provides" |cut -d' ' -f1 |
+				fgrep -qs -x -e "$pkg" && continue
+			printf '%s\t%s\n' "$dir" "$pkg"
+		done
+	done
+}
+
+check_dirlist()
+{
+	local f="$1"; shift || return
+	local dirs="$(find_captured_dirs)"
+	[ -n "$dirs" ] || return 0
+	printf '%s\n' "$dirs" |
+	while read -r dir pkg; do
+		FileError "directory $dir belongs to $pkg" "$f"
+	done
+	return 1
+}
+
+run_check()
+{
+	if ! check_dirlist "$1"; then
+		CheckError 'directory ownership viloation'
+		return 1
+	fi
+}
