@@ -1,5 +1,5 @@
 Name: sisyphus_check
-Version: 0.8.0
+Version: 0.8.1
 Release: alt1
 
 Summary: package checker for Sisyphus
@@ -33,6 +33,10 @@ cp -a -- sisyphus_check.d %buildroot%_sysconfdir/%name/check.d
 %_bindir/*
 
 %changelog
+* Tue Jun 24 2008 Alexey Tourbin <at@altlinux.ru> 0.8.1-alt1
+- check-dirlist: new check for directory ownership with respect
+  to /usr/lib/rpm/*-files.req.list
+
 * Sun May 11 2008 Dmitry V. Levin <ldv@altlinux.org> 0.8.0-alt1
 - Factored out tests to %_sysconfdir/%name/check.d directory (legion).
 - Added options descriptions (legion).
