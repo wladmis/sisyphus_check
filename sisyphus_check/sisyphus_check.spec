@@ -1,5 +1,5 @@
 Name: sisyphus_check
-Version: 0.8.1
+Version: 0.8.2
 Release: alt1
 
 Summary: package checker for Sisyphus
@@ -33,6 +33,9 @@ cp -a -- sisyphus_check.d %buildroot%_sysconfdir/%name/check.d
 %_bindir/*
 
 %changelog
+* Sat Aug 09 2008 Alexey Tourbin <at@altlinux.ru> 0.8.2-alt1
+- check-dirlist: prune stderr when *-files.req.list are missing (#16631)
+
 * Tue Jun 24 2008 Alexey Tourbin <at@altlinux.ru> 0.8.1-alt1
 - check-dirlist: new check for directory ownership with respect
   to /usr/lib/rpm/*-files.req.list
