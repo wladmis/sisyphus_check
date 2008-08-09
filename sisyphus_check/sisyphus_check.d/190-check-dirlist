@@ -10,12 +10,13 @@
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
 
-dirlist=$(set +f; grep -h ^/. /usr/lib/rpm/*-files.req.list |sort -ur)
+dirlist=$(set +f; grep -h ^/. /usr/lib/rpm/*-files.req.list 2>/dev/null |sort -ur)
 dirs=$(printf '%s\n' "$dirlist" |
 	while read -r d pkg; do echo "${d%/}"; done)
 
 find_captured_dirs()
 {
+	[ -n "$dirlist" ] || return 0
 	local mydirs="$(printf '%s\n' "$rpm_filenames" |fgrep -x "$dirs")"
 	[ -n "$mydirs" ] || return 0
 	printf '%s\n' "$mydirs" |
