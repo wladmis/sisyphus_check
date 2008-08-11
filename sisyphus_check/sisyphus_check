@@ -177,6 +177,16 @@ get_check_list()
 		-printf '%f\n'
 }
 
+expand_check_list()
+{
+	local list="$1"; shift
+	if [ -z "${list#[Aa][Ll][Ll]}" ]; then
+		printf %s "$check_env" |sed 's/^check-//'
+	else
+		printf %s "$list" |tr , ' '
+	fi
+}
+
 show_usage()
 {
 	[ -z "$*" ] || Info "$*"
@@ -230,7 +240,7 @@ while :; do
 				Info "$mode: invalid argument: $1"
 				show_usage
 			fi
-			for arg in `printf %s "$1" |tr , ' '`; do
+			for arg in `expand_check_list "$1"`; do
 				if ! printf '%s' "$check_env" |grep -qs "^check-$arg\$"; then
 					Info "$mode: invalid argument: $arg"
 					show_usage
