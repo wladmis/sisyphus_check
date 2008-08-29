@@ -1,5 +1,5 @@
 Name: sisyphus_check
-Version: 0.8.2
+Version: 0.8.3
 Release: alt1
 
 Summary: package checker for Sisyphus
@@ -33,6 +33,9 @@ cp -a -- sisyphus_check.d %buildroot%_sysconfdir/%name/check.d
 %_bindir/*
 
 %changelog
+* Fri Aug 29 2008 Dmitry V. Levin <ldv@altlinux.org> 0.8.3-alt1
+- sisyphus_check: Added -[-no]-check=ALL special value (Alexey Gladkov; closes: #16662).
+
 * Sat Aug 09 2008 Alexey Tourbin <at@altlinux.ru> 0.8.2-alt1
 - check-dirlist: prune stderr when *-files.req.list are missing (#16631)
 
