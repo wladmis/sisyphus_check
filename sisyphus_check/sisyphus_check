@@ -127,10 +127,10 @@ rpm_conflicts=[%{conflictname:shescape}" %{conflictflags:depflags} "%{conflictve
 		[ -z "$rpm_filenames" ] ||
 			rpm_filenames="$(printf %s "$rpm_filenames" |sort -u)"
 
-		rpm_requires="$(printf %s "$rpm_requires" |sed -e 's/ *$//' |sort -u)"
-		rpm_provides="$(printf %s "$rpm_provides" |sed -e 's/ *$//' |sort -u)"
-		[ -z "$rpm_obsoletes" ] || rpm_obsoletes="$(printf %s "$rpm_obsoletes" |sed -e 's/ *$//' |sort -u)"
-		[ -z "$rpm_conflicts" ] || rpm_conflicts="$(printf %s "$rpm_conflicts" |sed -e 's/ *$//' |sort -u)"
+		rpm_requires="$(printf %s "$rpm_requires" |sed 's/ *$//' |sort -u)"
+		rpm_provides="$(printf %s "$rpm_provides" |sed 's/ *$//' |sort -u)"
+		[ -z "$rpm_obsoletes" ] || rpm_obsoletes="$(printf %s "$rpm_obsoletes" |sed 's/ *$//' |sort -u)"
+		[ -z "$rpm_conflicts" ] || rpm_conflicts="$(printf %s "$rpm_conflicts" |sed 's/ *$//' |sort -u)"
 
 		run_checks "$f" || rc=1
 	done
@@ -218,14 +218,14 @@ Valid options are:
   --trust-gpg-names=LIST   change the list of trusted gpg names;
   --[no-]check=LIST        change the list of checks;
 EOF
-	printf %s\\n "$check_env" |sed -ne 's/.*/  --[no-]&/pg'
+	printf %s\\n "$check_env" |sed -n 's/.*/  --[no-]&/pg'
 	exit
 }
 
 check_list="$(get_check_list)"
-check_env="$(printf %s\\n "$check_list" |sed -e 's/^[0-9]\+-//' |sort -u)"
+check_env="$(printf %s\\n "$check_list" |sed 's/^[0-9]\+-//' |sort -u)"
 getopt_check="$(printf %s "$check_env" |tr -s '[:space:]' ',')"
-getopt_no_check="$(printf %s "$check_env" |sed -e 's/.*/no-&/' |tr -s '[:space:]' ',')"
+getopt_no_check="$(printf %s "$check_env" |sed 's/.*/no-&/' |tr -s '[:space:]' ',')"
 TEMP=`getopt -n $PROG -o h,q,v -l help,quiet,verbose,fast-check,files,directories,show-bad-files,recursive,trust-gpg-names:,check:,no-check:,check-,no-check-,$getopt_check,$getopt_no_check -- "$@"` || show_usage
 eval set -- "$TEMP"
 

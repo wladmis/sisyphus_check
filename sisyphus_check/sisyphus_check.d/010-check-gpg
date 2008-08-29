@@ -47,7 +47,7 @@ check_gpgname()
 	if [ -n "$no_gpgname_packagers" ]; then
 		local packager pname
 		packager="$(printf %s "$rpm_packager" |
-			sed -ne 's/^[^<]*<\([^@]\+\(@\| at \)[^>]\+\)>.*/\1/p' |
+			sed -n 's/^[^<]*<\([^@]\+\(@\| at \)[^>]\+\)>.*/\1/p' |
 			tr -s '[:space:]' ' ')"
 		for pname in $no_gpgname_packagers; do
 			[ "$pname" != "$packager" ] || return 0
@@ -58,11 +58,11 @@ check_gpgname()
 	local chlogname sed_gpg_name gpg_name
 
 	chlogname="$(printf %s "$rpm_changelogname" |
-		sed -ne 's/^.*<\([^@]\+\)\(@\| at \).*$/\1/p' |
+		sed -n 's/^.*<\([^@]\+\)\(@\| at \).*$/\1/p' |
 		tr '[:upper:]' '[:lower:]')"
 	sed_gpg_name='s/^.*[[:space:]]\(from\|aka\)[^<]\+<\([^@>]\+\)@altlinux\.\(ru\|com\|net\|org\)>.*$/\2/p'
 
-	for sign in $(printf %s "$rpm_signature" |sed -ne "$sed_gpg_name" |tr '[:upper:]' '[:lower:]' |sort -u); do
+	for sign in $(printf %s "$rpm_signature" |sed -n "$sed_gpg_name" |tr '[:upper:]' '[:lower:]' |sort -u); do
 		for gpg_name in $trust_gpg_names; do
 		    [ "$sign" != "$gpg_name" ] || return 0
 		done
@@ -70,7 +70,7 @@ check_gpgname()
 	done
 
 	chlogname="$(printf %s "$rpm_changelogname" |
-		sed -ne 's/^[^<]*<\([^@]\+\(@\| at \)[^>]\+\)>.*/\1/p' |
+		sed -n 's/^[^<]*<\([^@]\+\(@\| at \)[^>]\+\)>.*/\1/p' |
 		tr -s '[:space:]' ' ')"
 	FileError "changelog name $chlogname not found in signature" "$f"
 	return 1

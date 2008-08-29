@@ -22,7 +22,7 @@ check_changelog()
 		rc=1
 	fi
 
-	if ! printf %s "$rpm_changelogtext" |sed -e 's/[^[:alnum:]]//g' |grep -qsv '^$'; then
+	if ! printf %s "$rpm_changelogtext" |sed 's/[^[:alnum:]]//g' |grep -qsv '^$'; then
 		FileError "invalid CHANGELOGTEXT: $(printf %s "$rpm_changelogtext" |tr -s '[:space:]' ' ')" "$f"
 		rc=1
 	fi
@@ -35,7 +35,7 @@ check_changelog()
 	# Do not check changelog name for binary rpms.
 	if [ "$package_type" = src ]; then
 		local c_found
-		if ! c_found=`printf %s "$rpm_changelogname" |sed -ne '/^(none)$/q;s/[^<]\+<[^>]\+> *\(.\+\)$/\1/pg'`; then
+		if ! c_found=`printf %s "$rpm_changelogname" |sed -n '/^(none)$/q;s/[^<]\+<[^>]\+> *\(.\+\)$/\1/pg'`; then
 			FileError 'sed failed' "$f"
 			rc=1
 		fi
