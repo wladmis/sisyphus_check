@@ -1,0 +1,35 @@
+#!/bin/sh -efu
+
+check_noarch()
+{
+	local f="$1"; shift || return
+	local rc=0
+
+	case ${rpm_arch:?} in
+		noarch) ;;
+		*) return 0 ;;
+	esac
+
+	local bad_deps
+	if bad_deps=$(printf '%s\n%s\n' "$rpm_requires" "$rpm_provides" |cut -d' ' -f1 |
+			egrep '^lib[^(/)]+[.].so\>|[.]so\>[^/]*[(]|^/lib64/|^/usr/lib64/' ); then
+		FileError "invalid noarch depdencndies: $(printf %s "$bad_deps" |tr -s '[:space:]' ' ')" "$f"
+		rc=1
+	fi
+
+	local bad_files
+	if bad_files=$(printf '%s\n' "$rpm_filenames" |egrep '^/lib64/|^/usr/lib64/'); then
+		FileError "invalid noarch file paths: $(printf %s "$bad_files" |tr -s '[:space:]' ' ')" "$f"
+		rc=1
+	fi
+
+	return $rc
+}
+
+run_check()
+{
+	if ! check_noarch "$1"; then
+		CheckError 'noarch packaging violation'
+		return 1
+	fi
+}
