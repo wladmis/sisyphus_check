@@ -1,5 +1,5 @@
 Name: sisyphus_check
-Version: 0.8.3
+Version: 0.8.4
 Release: alt1
 
 Summary: package checker for Sisyphus
@@ -33,6 +33,9 @@ cp -a -- sisyphus_check.d %buildroot%_sysconfdir/%name/check.d
 %_bindir/*
 
 %changelog
+* Tue Sep 16 2008 Alexey Tourbin <at@altlinux.ru> 0.8.4-alt1
+- check-noarch: new check for soname dependencies and lib64 paths in noarch packages
+
 * Fri Aug 29 2008 Dmitry V. Levin <ldv@altlinux.org> 0.8.3-alt1
 - sisyphus_check: Added -[-no]-check=ALL special value (Alexey Gladkov; closes: #16662).
 
