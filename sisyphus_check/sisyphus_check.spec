@@ -34,17 +34,17 @@ cp -a -- sisyphus_check.d %buildroot%_sysconfdir/%name/check.d
 
 %changelog
 * Tue Sep 16 2008 Alexey Tourbin <at@altlinux.ru> 0.8.4-alt1
-- check-noarch: new check for soname dependencies and lib64 paths in noarch packages
+- check-noarch: New check for soname dependencies and lib64 paths in noarch packages.
 
 * Fri Aug 29 2008 Dmitry V. Levin <ldv@altlinux.org> 0.8.3-alt1
 - sisyphus_check: Added -[-no]-check=ALL special value (Alexey Gladkov; closes: #16662).
 
 * Sat Aug 09 2008 Alexey Tourbin <at@altlinux.ru> 0.8.2-alt1
-- check-dirlist: prune stderr when *-files.req.list are missing (#16631)
+- check-dirlist: Prune stderr when *-files.req.list are missing (#16631).
 
 * Tue Jun 24 2008 Alexey Tourbin <at@altlinux.ru> 0.8.1-alt1
-- check-dirlist: new check for directory ownership with respect
-  to /usr/lib/rpm/*-files.req.list
+- check-dirlist: New check for directory ownership with respect
+  to /usr/lib/rpm/*-files.req.list files.
 
 * Sun May 11 2008 Dmitry V. Levin <ldv@altlinux.org> 0.8.0-alt1
 - Factored out tests to %_sysconfdir/%name/check.d directory (legion).
