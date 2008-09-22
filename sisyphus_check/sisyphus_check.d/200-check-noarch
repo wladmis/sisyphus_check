@@ -7,7 +7,7 @@ check_noarch()
 
 	case ${rpm_arch:?} in
 		noarch) ;;
-		*) return 0 ;;
+		*) return ;;
 	esac
 
 	local bad_deps
