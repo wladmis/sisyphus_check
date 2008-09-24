@@ -18,7 +18,7 @@ check_pkgconfig()
 
 	local bad_files
 	if bad_files=$(printf '%s\n' "$rpm_filenames" |egrep "$bad_dirs"); then
-		FileError "invalid $rpm_arch pkg-config path: $(printf %s "$bad_files" |tr -s '[:space:]' ' ')" "$f"
+		FileError "invalid $rpm_arch pkg-config path: $(oneliner "$bad_files")" "$f"
 		return 1
 	fi
 }

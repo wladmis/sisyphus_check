@@ -20,12 +20,12 @@ check_deps()
 	rpm_deps=$(printf '%s\n%s\n%s\n%s\n' "$rpm_requires" "$rpm_provides" "$rpm_obsoletes" "$rpm_conflicts")
 
 	if bad=$(printf %s "$rpm_deps" |grep '[$%]'); then
-		FileError "invalid dependencies: $(printf %s "$bad" |tr -s '[:space:]' ' ')" "$f"
+		FileError "invalid dependencies: $(oneliner "$bad")" "$f"
 		rc=1
 	fi
 
 	if bad=$(printf %s "$rpm_requires" |cut -d' ' -f1 |egrep -x "$bad_deps"); then
-		FileError "forbidden requires: $(printf %s "$bad" |tr -s '[:space:]' ' ')" "$f"
+		FileError "forbidden requires: $(oneliner "$bad")" "$f"
 		rc=1
 	fi
 
@@ -33,7 +33,7 @@ check_deps()
 		return $rc
 
 	if bad=$(printf %s "$rpm_deps" |cut -d' ' -f1 |egrep '^kernel-(image|modules)'); then
-		FileError "forbidden dependencies: $(printf %s "$bad" |tr -s '[:space:]' ' ')" "$f"
+		FileError "forbidden dependencies: $(oneliner "$bad")" "$f"
 		rc=1
 	fi
 

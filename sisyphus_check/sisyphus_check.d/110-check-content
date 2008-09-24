@@ -11,12 +11,12 @@ check_content()
 	local bad
 
 	if [ "$rpm_name" != rpm ] && bad="$(printf %s "$rpm_filenames" |egrep -e '^/etc/rpm(/macros\.d)$')"; then
-		FileError "intersections with rpm: $(printf %s "$bad" |tr -s '[:space:]' ' ')" "$f"
+		FileError "intersections with rpm: $(oneliner "$bad")" "$f"
 		rc=1
 	fi
 
 	if [ "$rpm_name" != control ] && bad="$(printf %s "$rpm_filenames" |egrep -e '^/etc/control\.d(/facilities)?$')"; then
-		FileError "intersections with control: $(printf %s "$bad" |tr -s '[:space:]' ' ')" "$f"
+		FileError "intersections with control: $(oneliner "$bad")" "$f"
 		rc=1
 	fi
 

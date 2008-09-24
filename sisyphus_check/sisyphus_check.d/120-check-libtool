@@ -10,7 +10,7 @@ check_libtool()
 	local bad
 
 	if bad="$(printf %s "$rpm_filenames" |egrep -e '^(/usr(/X11R6)?)?/lib(64)?/lib[^/]+\.la$')"; then
-		FileError "forbidden libtool files: $(printf %s "$bad" |tr -s '[:space:]' ' ')" "$f"
+		FileError "forbidden libtool files: $(oneliner "$bad")" "$f"
 		rc=1
 	fi
 

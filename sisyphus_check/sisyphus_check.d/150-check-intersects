@@ -20,7 +20,7 @@ check_intersects()
 	fi
 
 	if [ -n "$text" ]; then
-		FileError "filesystem intersections: $(printf %s "$text" |tr -s '[:space:]' ' ')" "$f"
+		FileError "filesystem intersections: $(oneliner "$text")" "$f"
 		rc=1
 	fi
 

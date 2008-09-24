@@ -23,7 +23,7 @@ check_changelog()
 	fi
 
 	if ! printf %s "$rpm_changelogtext" |sed 's/[^[:alnum:]]//g' |grep -qsv '^$'; then
-		FileError "invalid CHANGELOGTEXT: $(printf %s "$rpm_changelogtext" |tr -s '[:space:]' ' ')" "$f"
+		FileError "invalid CHANGELOGTEXT: $(oneliner "$rpm_changelogtext")" "$f"
 		rc=1
 	fi
 

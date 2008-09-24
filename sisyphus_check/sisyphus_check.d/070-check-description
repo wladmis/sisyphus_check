@@ -8,7 +8,7 @@ check_description()
 	local f="$1" && shift || return 1
 
 	if ! printf %s "$rpm_description" 2>/dev/null |egrep -qs '[[:alpha:]]'; then
-		FileError "invalid DESCRIPTION: $(printf %s "$rpm_description" |tr -s '[:space:]' ' ')" "$f"
+		FileError "invalid DESCRIPTION: $(oneliner "$rpm_description")" "$f"
 		return 1
 	fi
 	return 0

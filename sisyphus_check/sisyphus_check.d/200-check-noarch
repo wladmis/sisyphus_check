@@ -13,13 +13,13 @@ check_noarch()
 	local bad_deps
 	if bad_deps=$(printf '%s\n%s\n' "$rpm_requires" "$rpm_provides" |cut -d' ' -f1 |
 			egrep '^lib[^(/)]+[.].so\>|[.]so\>[^/]*[(]|^/lib64/|^/usr/lib64/' ); then
-		FileError "invalid noarch dependencies: $(printf %s "$bad_deps" |tr -s '[:space:]' ' ')" "$f"
+		FileError "invalid noarch dependencies: $(oneliner "$bad_deps")" "$f"
 		rc=1
 	fi
 
 	local bad_files
 	if bad_files=$(printf '%s\n' "$rpm_filenames" |egrep '^/lib64/|^/usr/lib64/'); then
-		FileError "invalid noarch file paths: $(printf %s "$bad_files" |tr -s '[:space:]' ' ')" "$f"
+		FileError "invalid noarch file paths: $(oneliner "$bad_files")" "$f"
 		rc=1
 	fi
 

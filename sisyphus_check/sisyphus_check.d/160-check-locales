@@ -13,7 +13,7 @@ check_locales()
 
 	local locales
 	if locales="$(printf %s "$rpm_filenames" |grep '^/usr/share/locale\(/[^/]\+\)\?$')"; then
-		FileError "files may belong to glibc-locales only: $(printf %s "$locales" |tr -s '[:space:]' ' ')" "$f"
+		FileError "files may belong to glibc-locales only: $(oneliner "$locales")" "$f"
 		return 1
 	fi
 }
