@@ -32,7 +32,7 @@ check_deps()
 	[ -n "${rpm_name##kernel-*}" ] ||
 		return $rc
 
-	if bad=$(printf %s "$rpm_deps" |cut -d' ' -f1 |egrep '^kernel-(image|modules)'); then #'
+	if bad=$(printf %s "$rpm_deps" |cut -d' ' -f1 |egrep '^kernel-(image|modules)'); then
 		FileError "forbidden dependencies: $(printf %s "$bad" |tr -s '[:space:]' ' ')" "$f"
 		rc=1
 	fi
