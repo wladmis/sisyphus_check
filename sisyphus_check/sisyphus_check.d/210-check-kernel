@@ -1,0 +1,118 @@
+#!/bin/sh -efu
+
+rpm_name="${rpm_name?RPM name required}"
+rpm_release="${rpm_release?RPM release required}"
+rpm_group="${rpm_group?RPM group required}"
+rpm_requires="${rpm_requires?}"
+package_type="${package_type?}"
+
+kernel_version_code() {
+	local release="$1" && shift
+	local kver version patchlevel sublevel
+
+	kver="$(printf %s "$release"    | cut -d- -f1)"
+	version="$(printf %s "$kver"    | cut -d. -f1)"
+	patchlevel="$(printf %s "$kver" | cut -d. -f2)"
+	sublevel="$(printf %s "$kver"   | cut -d. -f3)"
+
+	printf '%s' $(($version * 65536 + $patchlevel * 256 + $sublevel))
+}
+
+kernel_pattern=
+check_kmodule() {
+	local f="$1" && shift || return 1
+
+	if [ "$rpm_arch" = 'noarch' ]; then
+		FileError "architecture should not be 'noarch'" "$f"
+		return 1
+	fi
+
+	local kernel_require kernel_flavour kernel_version kernel_release kernel_code
+
+	kernel_require="$(printf %s "$rpm_requires" |grep "^$kernel_pattern" |sort -u)"
+
+	if [ -z "$kernel_require" ]; then
+		FileError "kernel module should require kernel image" "$f"
+		return 1
+	fi
+
+	if [ -z "${kernel_require##*
+*}" ]; then
+		FileError "kernel module should require only one kernel image" "$f"
+		return 1
+	fi
+
+	if [ -n "${kernel_require##* = *}" ]; then
+		FileError "kernel module should require the concrete kernel version" "$f"
+		return 1
+	fi
+
+	kernel_flavour="${kernel_require#$kernel_pattern}"
+	kernel_flavour="${kernel_flavour%% *}"
+
+	kernel_version="${kernel_require##* = }"
+	kernel_version="${kernel_version%%-alt*}"
+	kernel_code="$(kernel_version_code "$kernel_version")"
+
+	kernel_release="${kernel_require##*-alt}"
+
+	if [ "$rpm_release" = "${rpm_release%.$kernel_release}" ]; then
+		FileError "RELEASE should be ended by kernel release" "$f"
+		return 1
+	fi
+
+	if [ "$rpm_release" = "${rpm_release%.$kernel_code.$kernel_release}" ]; then
+		FileError "RELEASE should contain kernel magic number" "$f"
+		return 1
+	fi
+
+	if [ "$rpm_name" = "${rpm_name%-$kernel_flavour}" ]; then
+		FileError "flavour should be '$kernel_flavour'" "$f"
+		return 1
+	fi
+}
+
+check_kernel_group() {
+	local f="$1" && shift || return 1
+	local group
+
+	case "$rpm_name" in
+		kernel-headers-*|kernel-source-*) group='Development/Kernel' ;;
+		kernel-image-*|kernel-modules-*)  group='System/Kernel and hardware' ;;
+		*) return 0 ;;
+	esac
+
+	if [ "$rpm_group" != "$group" ]; then
+		FileError "GROUP should be '$group'" "$f"
+		return 1
+	fi
+}
+
+run_check() {
+	local rc=0
+
+	[ -z "${rpm_name##kernel-*}" ] ||
+		return $rc
+
+	check_kernel_group "$1" ||
+		rc=1
+
+	if [ -n "${rpm_name##kernel-modules-*}" ]; then
+		[ "$rc" = 0 ] ||
+			CheckError 'kernel module violation'
+		return $rc
+	fi
+
+	case "$package_type" in
+		bin) kernel_pattern='kernel-image-' ;;
+		src) kernel_pattern='kernel-headers-modules-' ;;
+	esac
+
+	check_kmodule "$1" ||
+		rc=1
+
+	[ "$rc" = 0 ] ||
+		CheckError 'kernel module violation'
+
+	return $rc
+}
