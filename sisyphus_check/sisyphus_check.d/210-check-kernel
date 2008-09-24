@@ -43,7 +43,7 @@ check_kmodule() {
 	fi
 
 	if [ -n "${kernel_require##* = *}" ]; then
-		FileError "kernel module should require the concrete kernel version" "$f"
+		FileError "kernel module requirement should specify a kernel version" "$f"
 		return 1
 	fi
 
@@ -57,17 +57,17 @@ check_kmodule() {
 	kernel_release="${kernel_require##*-alt}"
 
 	if [ "$rpm_release" = "${rpm_release%.$kernel_release}" ]; then
-		FileError "RELEASE should be ended by kernel release" "$f"
+		FileError "package RELEASE should ends with kernel release number" "$f"
 		return 1
 	fi
 
 	if [ "$rpm_release" = "${rpm_release%.$kernel_code.$kernel_release}" ]; then
-		FileError "RELEASE should contain kernel magic number" "$f"
+		FileError "package RELEASE should contain kernel magic number" "$f"
 		return 1
 	fi
 
 	if [ "$rpm_name" = "${rpm_name%-$kernel_flavour}" ]; then
-		FileError "flavour should be '$kernel_flavour'" "$f"
+		FileError "kernel module flavour mismatch, expected flavour is '$kernel_flavour'" "$f"
 		return 1
 	fi
 }
@@ -83,7 +83,7 @@ check_kernel_group() {
 	esac
 
 	if [ "$rpm_group" != "$group" ]; then
-		FileError "GROUP should be '$group'" "$f"
+		FileError "package GROUP should be '$group'" "$f"
 		return 1
 	fi
 }
@@ -99,7 +99,7 @@ run_check() {
 
 	if [ -n "${rpm_name##kernel-modules-*}" ]; then
 		[ "$rc" = 0 ] ||
-			CheckError 'kernel module violation'
+			CheckError 'kernel package violation'
 		return $rc
 	fi
 
