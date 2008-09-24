@@ -7,7 +7,7 @@ check_summary()
 {
 	local f="$1" && shift || return 1
 
-	if ! printf %s "$rpm_summary" |egrep -qs '[[:alpha:]]'; then
+	if ! printf %s "$rpm_summary" 2>/dev/null |egrep -qs '[[:alpha:]]'; then
 		FileError "invalid SUMMARY: $rpm_summary" "$f"
 		return 1
 	fi
