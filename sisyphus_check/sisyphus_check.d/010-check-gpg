@@ -23,11 +23,11 @@ check_gpg()
 		return 1
 	fi
 
-	if ! printf %s "$rpm_signature" |grep -qs '^MD5 sum OK: '; then
+	if ! printf %s "$rpm_signature" 2>/dev/null |grep -qs '^MD5 sum OK: '; then
 		bads=' md5'
 	fi
 
-	if ! printf %s "$rpm_signature" |grep -qs '^gpg: Good signature '; then
+	if ! printf %s "$rpm_signature" 2>/dev/null |grep -qs '^gpg: Good signature '; then
 		bads=' gnupg'
 	fi
 
