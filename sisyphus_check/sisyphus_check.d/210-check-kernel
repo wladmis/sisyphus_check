@@ -57,7 +57,7 @@ check_kmodule() {
 	kernel_release="${kernel_require##*-alt}"
 
 	if [ "$rpm_release" = "${rpm_release%.$kernel_release}" ]; then
-		FileError "package RELEASE should ends with kernel release number" "$f"
+		FileError "package RELEASE should end with kernel release number" "$f"
 		return 1
 	fi
 
