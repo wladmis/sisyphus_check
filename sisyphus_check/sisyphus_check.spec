@@ -1,5 +1,5 @@
 Name: sisyphus_check
-Version: 0.8.4
+Version: 0.8.5
 Release: alt1
 
 Summary: package checker for Sisyphus
@@ -33,6 +33,13 @@ cp -a -- sisyphus_check.d %buildroot%_sysconfdir/%name/check.d
 %_bindir/*
 
 %changelog
+* Fri Sep 26 2008 Dmitry V. Levin <ldv@altlinux.org> 0.8.5-alt1
+- 210-check-kernel: New check to enforce kernel policy (Alexey Gladkov).
+- 010-check-gpg, 060-check-summary, 070-check-description:
+  Hide SIGPIPE (Alexey Gladkov).
+- 100-check-deps: Userspace packages should not depend
+  from kernelspace (Alexey Gladkov).
+
 * Tue Sep 16 2008 Alexey Tourbin <at@altlinux.ru> 0.8.4-alt1
 - check-noarch: New check for soname dependencies and lib64 paths in noarch packages.
 
