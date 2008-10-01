@@ -18,6 +18,30 @@ kernel_version_code() {
 	printf '%s' $(($version * 65536 + $patchlevel * 256 + $sublevel))
 }
 
+check_builtin_kmodule() {
+	if [ "$rpm_version" != "$kernel_version" ]; then
+		FileError "package VERSION should be same as kernel version" "$f"
+		return 1
+	fi
+
+	if [ "$rpm_release" != "alt$kernel_release" ]; then
+		FileError "package RELEASE should be same as kernel release" "$f"
+		return 1
+	fi
+}
+
+check_standalone_kmodule() {
+	if [ "$rpm_release" = "${rpm_release%.$kernel_release}" ]; then
+		FileError "package RELEASE should end with kernel release number" "$f"
+		return 1
+	fi
+
+	if [ "$rpm_release" = "${rpm_release%.$kernel_code.$kernel_release}" ]; then
+		FileError "package RELEASE should contain kernel magic number" "$f"
+		return 1
+	fi
+}
+
 kernel_pattern=
 check_kmodule() {
 	local f="$1" && shift || return 1
@@ -56,19 +80,17 @@ check_kmodule() {
 
 	kernel_release="${kernel_require##*-alt}"
 
-	if [ "$rpm_release" = "${rpm_release%.$kernel_release}" ]; then
-		FileError "package RELEASE should end with kernel release number" "$f"
-		return 1
-	fi
-
-	if [ "$rpm_release" = "${rpm_release%.$kernel_code.$kernel_release}" ]; then
-		FileError "package RELEASE should contain kernel magic number" "$f"
-		return 1
-	fi
-
 	if [ "$rpm_name" = "${rpm_name%-$kernel_flavour}" ]; then
 		FileError "kernel module flavour mismatch, expected flavour is '$kernel_flavour'" "$f"
 		return 1
+	fi
+
+	if [ "$rpm_sourcerpm" != "$kernel_pattern$kernel_flavour-$kernel_version-alt$kernel_release.src.rpm" ]; then
+		check_standalone_kmodule ||
+			return 1
+	else
+		check_builtin_kmodule ||
+			return 1
 	fi
 }
 
