@@ -1,5 +1,5 @@
 Name: sisyphus_check
-Version: 0.8.5
+Version: 0.8.6
 Release: alt1
 
 Summary: package checker for Sisyphus
@@ -33,6 +33,10 @@ cp -a -- sisyphus_check.d %buildroot%_sysconfdir/%name/check.d
 %_bindir/*
 
 %changelog
+* Wed Oct 01 2008 Dmitry V. Levin <ldv@altlinux.org> 0.8.6-alt1
+- 210-check-kernel: Special exception for kernel modules
+  built within a kernel image (Alexey Gladkov).
+
 * Fri Sep 26 2008 Dmitry V. Levin <ldv@altlinux.org> 0.8.5-alt1
 - 210-check-kernel: New check to enforce kernel policy (Alexey Gladkov).
 - 010-check-gpg, 060-check-summary, 070-check-description:
