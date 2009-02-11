@@ -1,9 +1,9 @@
 Name: sisyphus_check
-Version: 0.8.6
+Version: 0.8.7
 Release: alt1
 
 Summary: package checker for Sisyphus
-License: GPL
+License: GPLv2+
 Group: Development/Other
 BuildArch: noarch
 Packager: Dmitry V. Levin <ldv@altlinux.org>
@@ -33,6 +33,12 @@ cp -a -- sisyphus_check.d %buildroot%_sysconfdir/%name/check.d
 %_bindir/*
 
 %changelog
+* Thu Feb 12 2009 Dmitry V. Levin <ldv@altlinux.org> 0.8.7-alt1
+- sisyphus-check-functions (init_check):
+  Updated packager_pattern to allow more spaces and disallow null elements.
+- 190-check-dirlist:
+  Fixed typo in error message (Slava Semushin; closes: #17001).
+
 * Wed Oct 01 2008 Dmitry V. Levin <ldv@altlinux.org> 0.8.6-alt1
 - 210-check-kernel: Special exception for kernel modules
   built within a kernel image (Alexey Gladkov).

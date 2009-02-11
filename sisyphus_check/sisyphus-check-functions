@@ -1,6 +1,6 @@
 #!/bin/sh -efu
 #
-# Copyright (C) 2003-2008  Stanislav Ievlev <inger@altlinux.org>,
+# Copyright (C) 2003-2009  Stanislav Ievlev <inger@altlinux.org>,
 #                          Dmitry V. Levin <ldv@altlinux.org>,
 #                          Alexey Gladkov <legion@altlinux.org>
 #
