@@ -114,7 +114,8 @@ init_check()
 	fs_filelist="$(LC_ALL=C rpmquery -l filesystem)" || Fatal 'rpmquery filesystem failed.'
 	printf %s "$fs_filelist" |LC_COLLATE=C sort -u >"$fs_list" || Fatal 'sort failed.'
 	current_time="$(date +%s)" || Fatal 'date failed.'
-	packager_pattern='[^<[:space:]][[:space:]]+<[^@]+(@| at )(packages\.)?altlinux(\.| dot )(com|net|org|ru)>'
+	local s='[:space:]'
+	packager_pattern="[^<$s][$s]+<[$s]*[^@>$s]+([$s]*@[$s]*|[$s]+at[$s]+)(packages[$s]*[.][$s]*)?altlinux([$s]*[.][$s]*|[$s]+dot[$s]+)(com|net|org|ru)[$s]*>"
 }
 
 package_type=
