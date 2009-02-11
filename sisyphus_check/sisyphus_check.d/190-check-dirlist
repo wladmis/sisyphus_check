@@ -47,7 +47,7 @@ check_dirlist()
 run_check()
 {
 	if ! check_dirlist "$1"; then
-		CheckError 'directory ownership viloation'
+		CheckError 'directory ownership violation'
 		return 1
 	fi
 }
