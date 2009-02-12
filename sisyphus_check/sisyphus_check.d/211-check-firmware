@@ -1,0 +1,41 @@
+#!/bin/sh -efu
+
+rpm_arch="${rpm_arch?RPM arch required}"
+rpm_name="${rpm_name?RPM name required}"
+rpm_filenames="${rpm_filenames?RPM file list required}"
+
+check_firmware() {
+	local f="$1" && shift || return 1
+	local rc=0 firmware_name=0 firmware_files=0
+
+	[ -n "${rpm_name##firmware-*}" ] ||
+		firmware_name=1
+
+	! printf %s "$rpm_filenames" 2>/dev/null |grep -qs '^/lib/firmware/' ||
+		firmware_files=1
+
+	case "$firmware_name,$firmware_files" in
+		0,1)	FileError "package NAME should start with the 'firmware-': $rpm_name" "$f"
+			rc=1
+			;;
+		1,0)	FileError "firmware files should be placed in /lib/firmware/" "$f"
+			rc=1
+			;;
+		0,0)	return 0
+			;;
+	esac
+
+	if [ "$rpm_arch" != noarch ]; then
+		FileError "architecture should not be 'noarch'" "$f"
+		rc=1
+	fi
+
+	return $rc
+}
+
+run_check() {
+	if ! check_firmware "$1"; then
+		CheckError 'firmware packaging violation'
+		return 1
+	fi
+}
