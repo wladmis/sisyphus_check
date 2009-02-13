@@ -1,5 +1,5 @@
 Name: sisyphus_check
-Version: 0.8.8
+Version: 0.8.9
 Release: alt1
 
 Summary: package checker for Sisyphus
@@ -33,6 +33,9 @@ cp -a -- sisyphus_check.d %buildroot%_sysconfdir/%name/check.d
 %_bindir/*
 
 %changelog
+* Fri Feb 13 2009 Dmitry V. Levin <ldv@altlinux.org> 0.8.9-alt1
+- 211-check-firmware: Marked kernel-image-* packages as exception.
+
 * Fri Feb 13 2009 Dmitry V. Levin <ldv@altlinux.org> 0.8.8-alt1
 - Merged 160-check-locales into 110-check-content (Alexey Gladkov).
 - 211-check-firmware: New check for firmware policy compliance (Alexey Gladkov),
