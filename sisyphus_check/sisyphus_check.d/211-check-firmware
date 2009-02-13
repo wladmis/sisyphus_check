@@ -9,6 +9,9 @@ check_firmware()
 	# Check firmware for binary rpms only.
 	[ "$package_type" = bin ] || return 0
 
+	# kernel-image-* packages are exception.
+	[ -n "${rpm_name##kernel-image-*}" ] || return 0
+
 	local f="$1" && shift || return 1
 	local rc=0 firmware_name=0 firmware_files=0
 
