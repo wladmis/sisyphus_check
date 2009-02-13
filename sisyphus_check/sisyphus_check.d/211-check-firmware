@@ -4,7 +4,11 @@ rpm_arch="${rpm_arch?RPM arch required}"
 rpm_name="${rpm_name?RPM name required}"
 rpm_filenames="${rpm_filenames?RPM file list required}"
 
-check_firmware() {
+check_firmware()
+{
+	# Check firmware for binary rpms only.
+	[ "$package_type" = bin ] || return 0
+
 	local f="$1" && shift || return 1
 	local rc=0 firmware_name=0 firmware_files=0
 
