@@ -1,5 +1,5 @@
 Name: sisyphus_check
-Version: 0.8.7
+Version: 0.8.8
 Release: alt1
 
 Summary: package checker for Sisyphus
@@ -33,6 +33,11 @@ cp -a -- sisyphus_check.d %buildroot%_sysconfdir/%name/check.d
 %_bindir/*
 
 %changelog
+* Fri Feb 13 2009 Dmitry V. Levin <ldv@altlinux.org> 0.8.8-alt1
+- Merged 160-check-locales into 110-check-content (Alexey Gladkov).
+- 211-check-firmware: New check for firmware policy compliance (Alexey Gladkov),
+  see http://www.altlinux.org/FirmwarePolicy for details.
+
 * Thu Feb 12 2009 Dmitry V. Levin <ldv@altlinux.org> 0.8.7-alt1
 - sisyphus-check-functions (init_check):
   Updated packager_pattern to allow more spaces and disallow null elements.
@@ -44,7 +49,7 @@ cp -a -- sisyphus_check.d %buildroot%_sysconfdir/%name/check.d
   built within a kernel image (Alexey Gladkov).
 
 * Fri Sep 26 2008 Dmitry V. Levin <ldv@altlinux.org> 0.8.5-alt1
-- 210-check-kernel: New check to enforce kernel policy (Alexey Gladkov).
+- 210-check-kernel: New check for kernel policy compliance (Alexey Gladkov).
 - 010-check-gpg, 060-check-summary, 070-check-description:
   Hide SIGPIPE (Alexey Gladkov).
 - 100-check-deps: Userspace packages should not depend
