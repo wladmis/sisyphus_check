@@ -33,7 +33,7 @@ check_firmware()
 	esac
 
 	if [ "$rpm_arch" != noarch ]; then
-		FileError "architecture should not be 'noarch'" "$f"
+		FileError "package architecture should be 'noarch'" "$f"
 		rc=1
 	fi
 
