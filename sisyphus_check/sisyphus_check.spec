@@ -1,5 +1,5 @@
 Name: sisyphus_check
-Version: 0.8.9
+Version: 0.8.10
 Release: alt1
 
 Summary: package checker for Sisyphus
@@ -33,6 +33,9 @@ cp -a -- sisyphus_check.d %buildroot%_sysconfdir/%name/check.d
 %_bindir/*
 
 %changelog
+* Fri Feb 20 2009 Dmitry V. Levin <ldv@altlinux.org> 0.8.10-alt1
+- 220-check-python: New check for python policy compliance.
+
 * Fri Feb 13 2009 Dmitry V. Levin <ldv@altlinux.org> 0.8.9-alt1
 - 211-check-firmware: Marked kernel-image-* packages as exception.
 
