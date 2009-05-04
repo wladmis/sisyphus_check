@@ -5,34 +5,60 @@ fhs_config='/etc/sisyphus_check/fhs'
 rpm_name="${rpm_name?RPM name required}"
 rpm_filenames="${rpm_filenames?RPM file list required}"
 
+fhs_exceptions()
+{
+	local name re
+	while read -r name re; do
+		case "${name-}" in
+			"$rpm_name") ;;
+			*) continue ;;
+		esac
+		case "${re-}" in
+			*/*) ;;
+			*) continue ;;
+		esac
+		printf '%s\n' "$re"
+	done <"$fhs_config"
+}
+
 # check for FHS-2.2 violations
 check_fhs()
 {
 	local f="$1" && shift || return 1
-	local list pattern bad
 
 	# Do not check filesystem package.
 	[ "$rpm_name" != filesystem ] || return 0
 
-	list=$(printf %s "$rpm_filenames" |grep -e '^/')
-	[ -n "$list" ] || return 0
+	local rc=0
+	local fhs_re='^/(bin|boot|etc|lib(64)?|sbin|usr/(X11R6|bin|etc|games|include|lib(exec|64)?|sbin|share|src)|var/(cache|games|lib|lock|log|run|spool|www|yp))/.*'
+	local filenames bad_filenames except_re
 
-	pattern="$(grep '^[^#]' "$fhs_config" |
-		while read -r n v; do
-			[ -n "$n" -a -n "$v" -a -z "${rpm_name##$n}" ] || continue
-			printf %s\\n "$v"
-		done |LC_COLLATE=C sort -u)" || return 1
-	pattern="$(printf %s "$pattern" |tr -s '\n' '|')"
-	[ "$pattern" != '' ] || pattern='^$'
-
-	list="$(printf %s "$list" |egrep -v "$pattern")" ||
-		return 0
-
-	if bad="$(printf %s "$list" |egrep -ve '^/(bin|boot|etc|lib(64)?|sbin|usr/(X11R6|bin|etc|games|include|lib(exec|64)?|sbin|share|src)|var/(cache|games|lib|lock|log|run|spool|www|yp))/.*')"; then
-		FileError "FHS-2.2 violations: $(oneliner "$bad")" "$f"
-		return 1
+	# Check packaged files.
+	# NB: extra grep to exclude source packages.
+	if [ -n "$rpm_filenames" ] &&
+	   filenames=$(printf '%s\n' "$rpm_filenames" |grep '^/') &&
+	   bad_filenames=$(printf '%s\n' "$filenames" |egrep -v -e "$fhs_re"); then
+		except_re=$(fhs_exceptions)
+		if [ -z "$except_re" ] ||
+		   bad_filenames=$(printf '%s\n' "$bad_filenames" |egrep -v -e "$except_re"); then
+			FileError "FHS-2.2 violations: $(oneliner "$bad_filenames")" "$f"
+			rc=1
+		fi
 	fi
-	return 0
+
+	# Check provided paths.
+	if [ -n "$rpm_provides" ] &&
+	   filenames=$(printf '%s\n' "$rpm_provides" |grep -o '^/[^[:space:]]*') &&
+	   bad_filenames=$(printf '%s\n' "$filenames" |egrep -v -e "$fhs_re"); then
+		except_re=$(fhs_exceptions)
+		if [ -z "$except_re" ] ||
+		   bad_filenames=$(printf '%s\n' "$bad_filenames" |egrep -v -e "$except_re"); then
+			FileError "FHS-2.2 violations: provides $(oneliner "$bad_filenames")" "$f"
+			rc=1
+		fi
+	fi
+
+	return $rc
 }
 
 run_check() {
