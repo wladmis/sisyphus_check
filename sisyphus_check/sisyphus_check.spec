@@ -1,5 +1,5 @@
 Name: sisyphus_check
-Version: 0.8.10
+Version: 0.8.11
 Release: alt1
 
 Summary: package checker for Sisyphus
@@ -33,6 +33,10 @@ cp -a -- sisyphus_check.d %buildroot%_sysconfdir/%name/check.d
 %_bindir/*
 
 %changelog
+* Tue May 05 2009 Alexey Tourbin <at@altlinux.ru> 0.8.11-alt1
+- 130-check-fhs: Check provided paths as well (suggested by Dmitry V. Levin
+  after we discovered "Provides: /usr/config.h" in opencascade.spec).
+
 * Fri Feb 20 2009 Dmitry V. Levin <ldv@altlinux.org> 0.8.10-alt1
 - 220-check-python: New check for python policy compliance.
 
