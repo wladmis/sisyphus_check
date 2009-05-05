@@ -7,18 +7,14 @@ rpm_filenames="${rpm_filenames?RPM file list required}"
 
 fhs_exceptions()
 {
-	local name re
-	while read -r name re; do
-		case "${name-}" in
-			"$rpm_name") ;;
+	grep '^[^#].*[[:space:]].*/' "$fhs_config" |
+	while read -r pkgname_pattern filename_re; do
+		case "$rpm_name" in
+			$pkgname_pattern) ;;
 			*) continue ;;
 		esac
-		case "${re-}" in
-			*/*) ;;
-			*) continue ;;
-		esac
-		printf '%s\n' "$re"
-	done <"$fhs_config"
+		printf '%s\n' "$filename_re"
+	done
 }
 
 # check for FHS-2.2 violations
