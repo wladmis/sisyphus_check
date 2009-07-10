@@ -97,6 +97,8 @@ rpm_vendor=%{vendor:shescape};
 rpm_version=%{version:shescape};
 rpm_filenames=[%{filenames:shescape}"
 "];
+rpm_perms_filenames=["%{filemodes:perms} "%{filenames:shescape}"
+"];
 rpm_requires=[%{requirename:shescape}" %{requireflags:depflags} "%{requireversion:shescape}"
 "];
 rpm_provides=[%{providename:shescape}" %{provideflags:depflags} "%{provideversion:shescape}"
@@ -126,6 +128,8 @@ rpm_conflicts=[%{conflictname:shescape}" %{conflictflags:depflags} "%{conflictve
 
 		[ -z "$rpm_filenames" ] ||
 			rpm_filenames="$(printf %s "$rpm_filenames" |sort -u)"
+		[ -z "$rpm_perms_filenames" ] ||
+			rpm_perms_filenames="$(printf %s "$rpm_perms_filenames" |sort -u -k2)"
 
 		rpm_requires="$(printf %s "$rpm_requires" |sed 's/ *$//' |sort -u)"
 		rpm_provides="$(printf %s "$rpm_provides" |sed 's/ *$//' |sort -u)"
