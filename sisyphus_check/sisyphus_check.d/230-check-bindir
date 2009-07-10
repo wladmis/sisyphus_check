@@ -1,0 +1,27 @@
+#!/bin/sh -efu
+
+check_bindir()
+{
+	local f="$1" rc=0
+	local dirs_or='bin|sbin|usr/bin|usr/sbin|usr/X11R6/bin|usr/games|usr/lib/kde4bin'
+
+	if printf %s "$rpm_filenames" |egrep "^/($dirs_or)/.*/" >&2; then
+		FileError "invalid bindir file paths" "$f"
+		rc=1
+	fi
+
+	if printf %s "$rpm_perms_filenames" |egrep "^[^l-]...(...)... /($dirs_or)/[^/]+\$" >&2; then
+		FileError "invalid bindir file modes" "$f"
+		rc=1
+	fi
+
+	return $rc
+}
+
+run_check()
+{
+	if ! check_bindir "$1"; then
+		CheckError 'bindir packaging violation'
+		return 1
+	fi
+}
