@@ -10,6 +10,11 @@ check_bindir()
 		rc=1
 	fi
 
+	if printf %s "$rpm_provides" |egrep "^/($dirs_or)/[^ ]*/" >&2; then
+		FileError "invalid bindir provides" "$f"
+		rc=1
+	fi
+
 	if printf %s "$rpm_perms_filenames" |egrep "^[^l-]...(...)... /($dirs_or)/[^/]+\$" >&2; then
 		FileError "invalid bindir file modes" "$f"
 		rc=1
