@@ -1,5 +1,5 @@
 Name: sisyphus_check
-Version: 0.8.11
+Version: 0.8.12
 Release: alt1
 
 Summary: package checker for Sisyphus
@@ -33,6 +33,9 @@ cp -a -- sisyphus_check.d %buildroot%_sysconfdir/%name/check.d
 %_bindir/*
 
 %changelog
+* Wed Jul 15 2009 Alexey Tourbin <at@altlinux.ru> 0.8.12-alt1
+- 230-check-bindir: New check for invalid PATH files (e.g. /usr/bin/*/*).
+
 * Tue May 05 2009 Alexey Tourbin <at@altlinux.ru> 0.8.11-alt1
 - 130-check-fhs: Check provided paths as well (suggested by Dmitry V. Levin
   after we discovered "Provides: /usr/config.h" in opencascade.spec).
