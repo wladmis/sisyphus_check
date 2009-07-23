@@ -1,5 +1,5 @@
 Name: sisyphus_check
-Version: 0.8.12
+Version: 0.8.13
 Release: alt1
 
 Summary: package checker for Sisyphus
@@ -33,6 +33,10 @@ cp -a -- sisyphus_check.d %buildroot%_sysconfdir/%name/check.d
 %_bindir/*
 
 %changelog
+* Thu Jul 23 2009 Dmitry V. Levin <ldv@altlinux.org> 0.8.13-alt1
+- fhs: Added exception for mingw32-* packages (closes: #20845).
+- 211-check-firmware: Marked udev package as exception.
+
 * Wed Jul 15 2009 Alexey Tourbin <at@altlinux.ru> 0.8.12-alt1
 - 230-check-bindir: New check for invalid PATH files (e.g. /usr/bin/*/*).
 
