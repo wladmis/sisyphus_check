@@ -9,11 +9,11 @@ check_perms()
 	local rc=0
 
 	if printf %s "$rpm_perms_filenames" |egrep -e '^-..s(r|.w|...r|....w)|^-...((r.|.w)s|..s(r|.w))' >&2; then
-		FileError 'bad permissions for suid/sgid files' "$f"
+		FileError 'unsafe suid/sgid file permissions (readable or writable)' "$f"
 		rc=1
 	fi
 	if printf %s "$rpm_perms_filenames" |egrep -e '^[^l].(w|..r|...w|.....r|......w)[^/]+/etc/sudo\.d/' >&2; then
-		FileError 'bad /etc/sudo.d/ file permissions (should be 0400)' "$f"
+		FileError 'unsafe /etc/sudo.d/ file permissions (should be 0400)' "$f"
 		rc=1
 	fi
 	if printf %s "$rpm_perms_filenames" |egrep -e '^[^l]....(w|...w)[^/]+/usr/' >&2; then
