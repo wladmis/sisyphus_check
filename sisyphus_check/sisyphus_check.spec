@@ -1,5 +1,5 @@
 Name: sisyphus_check
-Version: 0.8.13
+Version: 0.8.14
 Release: alt1
 
 Summary: package checker for Sisyphus
@@ -17,7 +17,7 @@ Conflicts: sisyphus < 0.7.2
 This package contains sisyphus_check utility.
 
 %prep
-%setup -q
+%setup
 
 %install
 install -pD -m644 fhs %buildroot%_sysconfdir/%name/fhs
@@ -33,6 +33,13 @@ cp -a -- sisyphus_check.d %buildroot%_sysconfdir/%name/check.d
 %_bindir/*
 
 %changelog
+* Wed Oct 07 2009 Dmitry V. Levin <ldv@altlinux.org> 0.8.14-alt1
+- 140-check-perms:
+  + Introduced /etc/sudo.d/* permissions check
+    (by Michael Shigorin; closes: #21864).
+  + Improved error messages (by Michael Shigorin).
+- 240-check-browser: New check for invalid browser paths.
+
 * Thu Jul 23 2009 Dmitry V. Levin <ldv@altlinux.org> 0.8.13-alt1
 - fhs: Added exception for mingw32-* packages (closes: #20845).
 - 211-check-firmware: Marked udev package as exception.
