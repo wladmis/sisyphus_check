@@ -13,6 +13,9 @@ initscripts
 /sbin/postun_ldconfig
 pam_stack\.so'
 
+bad_prereqs='/sbin/install-info
+/sbin/ldconfig'
+
 # check for unacceptable dependencies
 check_deps()
 {
@@ -30,6 +33,17 @@ check_deps()
 
 	if bad=$(printf %s "$rpm_requires" |cut -d' ' -f1 |egrep -x "$bad_deps"); then
 		FileError "forbidden requires: $(oneliner "$bad")" "$f"
+		rc=1
+	fi
+
+	# 2^6: RPMSENSE_PREREQ
+	# 2^14: RPMSENSE_FIND_REQUIRES
+	bad=$(printf %s "$rpm_requires" |
+		awk '$2>=64 && $2!=16384 {print $1}' |
+		egrep -x "$bad_prereqs" |
+		sort -u)
+	if [ -n "$bad" ]; then
+		FileError "forbidden prerequires: $(oneliner "$bad")" "$f"
 		rc=1
 	fi
 
