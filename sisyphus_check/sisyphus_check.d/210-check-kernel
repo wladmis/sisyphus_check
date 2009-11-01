@@ -53,7 +53,7 @@ check_kmodule() {
 
 	local kernel_require kernel_flavour kernel_version kernel_release kernel_code
 
-	kernel_require="$(printf %s "$rpm_requires" |grep "^$kernel_pattern" |sort -u)"
+	kernel_require="$(printf %s "$rpm_requires" |cut -d' ' -f1 |grep "^$kernel_pattern" |sort -u)"
 
 	if [ -z "$kernel_require" ]; then
 		FileError "kernel module should require kernel image" "$f"
