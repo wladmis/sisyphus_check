@@ -99,7 +99,7 @@ rpm_filenames=[%{filenames:shescape}"
 "];
 rpm_perms_filenames=["%{filemodes:perms} "%{filenames:shescape}"
 "];
-rpm_requires=[%{requirename:shescape}" %{requireflags:depflags} "%{requireversion:shescape}"
+rpm_requires=[%{requirename:shescape}" %{requireflags} %{requireflags:depflags} "%{requireversion:shescape}"
 "];
 rpm_provides=[%{providename:shescape}" %{provideflags:depflags} "%{provideversion:shescape}"
 "];
