@@ -1,5 +1,5 @@
 Name: sisyphus_check
-Version: 0.8.14
+Version: 0.8.15
 Release: alt1
 
 Summary: package checker for Sisyphus
@@ -33,6 +33,11 @@ cp -a -- sisyphus_check.d %buildroot%_sysconfdir/%name/check.d
 %_bindir/*
 
 %changelog
+* Fri Nov 06 2009 Dmitry V. Levin <ldv@altlinux.org> 0.8.15-alt1
+- 100-check-deps:
+  + Updated list of forbidden requirements.
+  + Added check for forbidden prerequirements.
+
 * Wed Oct 07 2009 Dmitry V. Levin <ldv@altlinux.org> 0.8.14-alt1
 - 140-check-perms:
   + Introduced /etc/sudo.d/* permissions check
