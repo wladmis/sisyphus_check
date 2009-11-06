@@ -37,9 +37,18 @@ check_deps()
 	fi
 
 	# 2^6: RPMSENSE_PREREQ
-	# 2^14: RPMSENSE_FIND_REQUIRES
+	# 2^8: RPMSENSE_INTERP
+	# 2^9: RPMSENSE_SCRIPT_PRE
+	# 2^10: RPMSENSE_SCRIPT_POST
+	# 2^11: RPMSENSE_SCRIPT_PREUN
+	# 2^12: RPMSENSE_SCRIPT_POSTUN
+	# 2^13: RPMSENSE_SCRIPT_VERIFY
+	# 2^16: RPMSENSE_TRIGGERIN
+	# 2^17: RPMSENSE_TRIGGERUN
+	# 2^18: RPMSENSE_TRIGGERPOSTUN
+	# 2^6+2^8+2^9+2^10+2^11+2^12+2^13+2^16+2^17+2^18 = 474944
 	bad=$(printf %s "$rpm_requires" |
-		awk '$2>=64 && $2!=16384 {print $1}' |
+		awk 'and($2,474944)>0 {print $1}' |
 		egrep -x "$bad_prereqs" |
 		sort -u)
 	if [ -n "$bad" ]; then
