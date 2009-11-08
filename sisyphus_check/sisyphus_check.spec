@@ -1,5 +1,5 @@
 Name: sisyphus_check
-Version: 0.8.15
+Version: 0.8.16
 Release: alt1
 
 Summary: package checker for Sisyphus
@@ -33,6 +33,9 @@ cp -a -- sisyphus_check.d %buildroot%_sysconfdir/%name/check.d
 %_bindir/*
 
 %changelog
+* Sun Nov 08 2009 Dmitry V. Levin <ldv@altlinux.org> 0.8.16-alt1
+- 210-check-kernel: Fixed regression introduced by previous release.
+
 * Fri Nov 06 2009 Dmitry V. Levin <ldv@altlinux.org> 0.8.15-alt1
 - 100-check-deps:
   + Updated list of forbidden requirements.
