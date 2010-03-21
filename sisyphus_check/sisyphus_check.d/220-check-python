@@ -8,7 +8,10 @@ check_python()
 	[ "$package_type" = bin ] || return 0
 
 	# python base packages are exception.
-	[ "${rpm_sourcerpm%-*-*.src.rpm}" != python ] || return 0
+	if printf %s "$rpm_sourcerpm" |
+	   egrep -qx 'python([2-9]\.[0-9])?-[^-]+-[^-]+'; then
+		return 0
+	fi
 
 	local f="$1" && shift || return 1
 	local rc=0
