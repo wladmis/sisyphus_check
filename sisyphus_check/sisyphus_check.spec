@@ -1,5 +1,5 @@
 Name: sisyphus_check
-Version: 0.8.16
+Version: 0.8.17
 Release: alt1
 
 Summary: package checker for Sisyphus
@@ -33,6 +33,10 @@ cp -a -- sisyphus_check.d %buildroot%_sysconfdir/%name/check.d
 %_bindir/*
 
 %changelog
+* Sun Mar 21 2010 Dmitry V. Levin <ldv@altlinux.org> 0.8.17-alt1
+- 220-check-python: Updated source rpm name check for base python
+  packages (closes: #23199).
+
 * Sun Nov 08 2009 Dmitry V. Levin <ldv@altlinux.org> 0.8.16-alt1
 - 210-check-kernel: Fixed regression introduced by previous release.
 
