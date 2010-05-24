@@ -1,17 +1,18 @@
 #!/bin/sh -efu
 
-bad_deps='fileutils
-sh-utils
-textutils
-XFree86-.*
-initscripts
+bad_deps='/etc/init\.d\(.*\)
 /etc/rc\.d/init\.d\((daemon|killproc|pidof)\)
-/etc/init\.d\(.*\)
-/usr/sbin/install_info
-/usr/sbin/uninstall_info
 /sbin/post_ldconfig
 /sbin/postun_ldconfig
-pam_stack\.so'
+/usr/sbin/install_info
+/usr/sbin/uninstall_info
+XFree86-.*
+fileutils
+initscripts
+pam_stack\.so
+sh-utils
+textutils
+.*\(GLIBC_PRIVATE\).*'
 
 bad_prereqs='/sbin/install-info
 /sbin/ldconfig'
