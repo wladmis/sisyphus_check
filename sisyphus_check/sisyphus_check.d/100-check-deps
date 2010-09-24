@@ -2,6 +2,8 @@
 
 bad_deps='/etc/init\.d\(.*\)
 /etc/rc\.d/init\.d\((daemon|killproc|pidof)\)
+/lib64/udev
+/lib64/udev/rules\.d
 /sbin/post_ldconfig
 /sbin/postun_ldconfig
 /usr/sbin/install_info
