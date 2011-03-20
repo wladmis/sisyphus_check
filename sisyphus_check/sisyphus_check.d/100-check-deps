@@ -9,6 +9,9 @@ bad_deps='/etc/init\.d\(.*\)
 /usr/sbin/install_info
 /usr/sbin/uninstall_info
 XFree86-.*
+xorg-x11-.*
+xorg-devel
+libmesa-devel
 fileutils
 initscripts
 pam_stack\.so
