@@ -108,7 +108,7 @@ check_kernel_group() {
 run_check() {
 	local rc=0
 
-	[ -z "${rpm_name##kernel-*}" ] ||
+	[ -z "${rpm_name##kernel-*}" ] && [ -n "${rpm_name##kernel-*-debuginfo}" ] ||
 		return $rc
 
 	check_kernel_group "$1" ||
