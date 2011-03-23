@@ -1,5 +1,5 @@
 Name: sisyphus_check
-Version: 0.8.19
+Version: 0.8.20
 Release: alt1
 
 Summary: package checker for Sisyphus
@@ -33,6 +33,10 @@ cp -a -- sisyphus_check.d %buildroot%_sysconfdir/%name/check.d
 %_bindir/*
 
 %changelog
+* Wed Mar 23 2011 Alexey Tourbin <at@altlinux.ru> 0.8.20-alt1
+- 100-check-deps (bad_deps): Added xorg-x11-* xorg-devel libmesa-devel.
+- 210-check-kernel: Exempted kernel-*-debuginfo from this check.
+
 * Fri Sep 24 2010 Dmitry V. Levin <ldv@altlinux.org> 0.8.19-alt1
 - 100-check-deps: Added /lib64/udev, /lib64/udev/rules.d
   and '(GLIBC_PRIVATE)' to the list of forbidden requirements.
