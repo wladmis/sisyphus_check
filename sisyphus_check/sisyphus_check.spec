@@ -1,5 +1,5 @@
 Name: sisyphus_check
-Version: 0.8.21
+Version: 0.8.22
 Release: alt1
 
 Summary: package checker for Sisyphus
@@ -32,6 +32,9 @@ cp -a -- sisyphus_check.d %buildroot%_sysconfdir/%name/check.d
 %_bindir/*
 
 %changelog
+* Tue Apr 05 2011 Dmitry V. Levin <ldv@altlinux.org> 0.8.22-alt1
+- fhs: renamed SysVinit to sysvinit.
+
 * Mon Mar 28 2011 Dmitry V. Levin <ldv@altlinux.org> 0.8.21-alt1
 - 100-check-deps (bad_deps): Removed xorg-x11-*, added xorg-x11-devel.
 
