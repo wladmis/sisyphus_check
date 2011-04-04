@@ -1,6 +1,5 @@
 # pkgname_pattern	pathname_regexp
 MAKEDEV			^/dev/MAKEDEV$
-SysVinit		^/dev/initctl$
 acct			^/var/account($|/)
 anonftp			^/var/ftp($|/)
 apache-common		^/var/www($|/)
@@ -19,5 +18,6 @@ oracle-preinstall	^/opt/oracle($|/)
 pam[02]_mktemp		^/tmp/\.private$
 prc-tools-common	^/opt/palmdev$
 rootfiles		^/root($|/)
+sysvinit		^/dev/initctl$
 udev			^/dev($|/)
 webserver-common	^/var/www($|/)
