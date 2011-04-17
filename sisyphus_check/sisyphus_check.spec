@@ -1,5 +1,5 @@
 Name: sisyphus_check
-Version: 0.8.22
+Version: 0.8.23
 Release: alt1
 
 Summary: package checker for Sisyphus
@@ -32,6 +32,9 @@ cp -a -- sisyphus_check.d %buildroot%_sysconfdir/%name/check.d
 %_bindir/*
 
 %changelog
+* Sun Apr 17 2011 Dmitry V. Levin <ldv@altlinux.org> 0.8.23-alt1
+- fhs: added exception for mingw64-* packages (closes: #25453).
+
 * Tue Apr 05 2011 Dmitry V. Levin <ldv@altlinux.org> 0.8.22-alt1
 - fhs: renamed SysVinit to sysvinit.
 
