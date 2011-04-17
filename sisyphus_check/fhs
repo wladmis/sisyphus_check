@@ -11,7 +11,6 @@ chrooted-resolv		^/var/resolv($|/)
 dev			^/dev($|/)
 dev-minimal		^/dev($|/)
 gpm			^/dev/gpmctl$
-i386-mingw32msvc-*	^/usr/i386-mingw32msvc($|/)
 m68k-palmos-*		^/usr/m68k-palmos($|/)
 mingw32-*		^/usr/i586-pc-mingw32($|/)
 mingw64-*		^/usr/x86_64-pc-mingw64($|/)
