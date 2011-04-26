@@ -13,7 +13,7 @@ dev-minimal		^/dev($|/)
 gpm			^/dev/gpmctl$
 m68k-palmos-*		^/usr/m68k-palmos($|/)
 mingw32-*		^/usr/i586-pc-mingw32($|/)
-mingw64-*		^/usr/x86_64-pc-mingw64($|/)
+mingw64-*		^/usr/x86_64-pc-mingw32($|/)
 oracle-preinstall	^/opt/oracle($|/)
 pam[02]_mktemp		^/tmp/\.private$
 prc-tools-common	^/opt/palmdev$
