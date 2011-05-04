@@ -1,5 +1,5 @@
 Name: sisyphus_check
-Version: 0.8.24
+Version: 0.8.25
 Release: alt1
 
 Summary: package checker for Sisyphus
@@ -32,6 +32,9 @@ cp -a -- sisyphus_check.d %buildroot%_sysconfdir/%name/check.d
 %_bindir/*
 
 %changelog
+* Wed May 04 2011 Dmitry V. Levin <ldv@altlinux.org> 0.8.25-alt1
+- 210-check-kernel (check_kmodule): strip epoch number from kernel_version.
+
 * Tue Apr 26 2011 Dmitry V. Levin <ldv@altlinux.org> 0.8.24-alt1
 - fhs: changed exception for mingw64-* packages (closes: #25453).
 
