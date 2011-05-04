@@ -70,6 +70,7 @@ check_kmodule() {
 	kernel_flavour="${kernel_flavour%% *}"
 
 	kernel_version="${kernel_require##* = }"
+	kernel_version="${kernel_version#*:}"
 	kernel_version="${kernel_version%%-alt*}"
 	kernel_code="$(kernel_version_code "$kernel_version")"
 
