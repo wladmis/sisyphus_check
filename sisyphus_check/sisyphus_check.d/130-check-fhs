@@ -26,7 +26,7 @@ check_fhs()
 	[ "$rpm_name" != filesystem ] || return 0
 
 	local rc=0
-	local fhs_re='^/(bin|boot|etc|lib(64)?|sbin|usr/(X11R6|bin|etc|games|include|lib(exec|64)?|sbin|share|src)|var/(cache|games|lib|lock|log|run|spool|www|yp))/.*'
+	local fhs_re='^/(bin|boot|etc|lib(64)?|sbin|usr/(bin|etc|games|include|lib(exec|64)?|sbin|share|src)|var/(cache|games|lib|lock|log|run|spool|www|yp))/.*'
 	local filenames bad_filenames except_re
 
 	# Check packaged files.
