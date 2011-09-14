@@ -1,5 +1,5 @@
 Name: sisyphus_check
-Version: 0.8.25
+Version: 0.8.26
 Release: alt1
 
 Summary: package checker for Sisyphus
@@ -32,6 +32,9 @@ cp -a -- sisyphus_check.d %buildroot%_sysconfdir/%name/check.d
 %_bindir/*
 
 %changelog
+* Thu Sep 15 2011 Dmitry V. Levin <ldv@altlinux.org> 0.8.26-alt1
+- Removed /usr/X11R6 (see ALT#11699).
+
 * Wed May 04 2011 Dmitry V. Levin <ldv@altlinux.org> 0.8.25-alt1
 - 210-check-kernel (check_kmodule): strip epoch number from kernel_version.
 
