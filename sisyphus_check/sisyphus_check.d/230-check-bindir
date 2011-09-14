@@ -3,7 +3,7 @@
 check_bindir()
 {
 	local f="$1" rc=0
-	local dirs_or='bin|sbin|usr/bin|usr/sbin|usr/X11R6/bin|usr/games|usr/lib/kde4bin'
+	local dirs_or='bin|sbin|usr/bin|usr/sbin|usr/games|usr/lib/kde4bin'
 
 	if printf %s "$rpm_filenames" |egrep "^/($dirs_or)/.*/" >&2; then
 		FileError "invalid bindir file paths" "$f"
