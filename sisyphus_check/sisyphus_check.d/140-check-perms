@@ -8,15 +8,15 @@ check_perms()
 	local f="$1" && shift || return 1
 	local rc=0
 
-	if printf %s "$rpm_perms_filenames" |egrep -e '^-..s(r|.w|...r|....w)|^-...((r.|.w)s|..s(r|.w))' >&2; then
+	if printf %s "$rpm_perms_filenames" |egrep '^-..s(r|.w|...r|....w)|^-...((r.|.w)s|..s(r|.w))' >&2; then
 		FileError 'unsafe suid/sgid file permissions (readable or writable)' "$f"
 		rc=1
 	fi
-	if printf %s "$rpm_perms_filenames" |egrep -e '^[^l].(w|..r|...w|.....r|......w)[^/]+/etc/sudo\.d/' >&2; then
+	if printf %s "$rpm_perms_filenames" |egrep '^[^l].(w|..r|...w|.....r|......w)[^/]+/etc/sudo\.d/' >&2; then
 		FileError 'unsafe /etc/sudo.d/ file permissions (should be 0400)' "$f"
 		rc=1
 	fi
-	if printf %s "$rpm_perms_filenames" |egrep -e '^[^l]....(w|...w)[^/]+/usr/' >&2; then
+	if printf %s "$rpm_perms_filenames" |egrep '^[^l]....(w|...w)[^/]+/usr/' >&2; then
 		FileError 'writable files in /usr/' "$f"
 		rc=1
 	fi
@@ -25,7 +25,7 @@ check_perms()
 		rc=1
 	fi
 	if [ "$package_type" = src ]; then
-		if printf %s "$rpm_perms_filenames" |egrep -e '^-([^r]|.[^w])' >&2; then
+		if printf %s "$rpm_perms_filenames" |egrep '^-([^r]|.[^w])' >&2; then
 			FileError 'bad permissions in source archive' "$f"
 			rc=1
 		fi

@@ -10,18 +10,18 @@ check_content()
 	local rc=0
 	local bad
 
-	if [ "$rpm_name" != rpm ] && bad="$(printf %s "$rpm_filenames" |egrep -e '^/etc/rpm(/macros\.d)$')"; then
+	if [ "$rpm_name" != rpm ] && bad="$(printf %s "$rpm_filenames" |egrep '^/etc/rpm(/macros\.d)$')"; then
 		FileError "intersections with rpm: $(oneliner "$bad")" "$f"
 		rc=1
 	fi
 
-	if [ "$rpm_name" != control ] && bad="$(printf %s "$rpm_filenames" |egrep -e '^/etc/control\.d(/facilities)?$')"; then
+	if [ "$rpm_name" != control ] && bad="$(printf %s "$rpm_filenames" |egrep '^/etc/control\.d(/facilities)?$')"; then
 		FileError "intersections with control: $(oneliner "$bad")" "$f"
 		rc=1
 	fi
 
 	# Do not check glibc-locales package.
-	if [ "$rpm_name" != glibc-locales ] && bad="$(printf %s "$rpm_filenames" |grep -e '^/usr/share/locale\(/[^/]\+\)\?$')"; then
+	if [ "$rpm_name" != glibc-locales ] && bad="$(printf %s "$rpm_filenames" |grep '^/usr/share/locale\(/[^/]\+\)\?$')"; then
 		FileError "intersections with glibc-locales: $(oneliner "$bad")" "$f"
 		rc=1
 	fi
