@@ -24,6 +24,10 @@ check_perms()
 		FileError 'world writable directories' "$f"
 		rc=1
 	fi
+	if printf %s "$rpm_perms_filenames" |egrep '^d((r.|.w)[^sx]|...(r.|.w)[^sx]|......(r.|.w)[^tx])' >&2; then
+		FileError 'accessible directories must have appropriate executable bits set' "$f"
+		rc=1
+	fi
 	if [ "$package_type" = src ]; then
 		if printf %s "$rpm_perms_filenames" |egrep '^-([^r]|.[^w])' >&2; then
 			FileError 'bad permissions in source archive' "$f"
