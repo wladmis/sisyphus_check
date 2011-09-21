@@ -1,5 +1,5 @@
 Name: sisyphus_check
-Version: 0.8.26
+Version: 0.8.27
 Release: alt1
 
 Summary: package checker for Sisyphus
@@ -32,6 +32,10 @@ cp -a -- sisyphus_check.d %buildroot%_sysconfdir/%name/check.d
 %_bindir/*
 
 %changelog
+* Wed Sep 21 2011 Dmitry V. Levin <ldv@altlinux.org> 0.8.27-alt1
+- 140-check-perms: added check that accessible directories have
+  appropriate executable bits set.
+
 * Thu Sep 15 2011 Dmitry V. Levin <ldv@altlinux.org> 0.8.26-alt1
 - Removed /usr/X11R6 (see ALT#11699).
 
