@@ -9,7 +9,7 @@ check_python()
 
 	# python base packages are exception.
 	if printf %s "$rpm_sourcerpm" |
-	   egrep -qx 'python([2-9]\.[0-9])?-[^-]+-[^-]+'; then
+	   egrep -qx 'python([2-9](\.[0-9])?)?-[^-]+-[^-]+'; then
 		return 0
 	fi
 
