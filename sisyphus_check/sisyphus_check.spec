@@ -1,5 +1,5 @@
 Name: sisyphus_check
-Version: 0.8.27
+Version: 0.8.28
 Release: alt1
 
 Summary: package checker for Sisyphus
@@ -32,6 +32,9 @@ cp -a -- sisyphus_check.d %buildroot%_sysconfdir/%name/check.d
 %_bindir/*
 
 %changelog
+* Thu Dec 15 2011 Vitaly Kuznetsov <vitty@altlinux.ru> 0.8.28-alt1
+- 220-check-python: add exception for python3 source package as well
+
 * Wed Sep 21 2011 Dmitry V. Levin <ldv@altlinux.org> 0.8.27-alt1
 - 140-check-perms: added check that accessible directories have
   appropriate executable bits set.
