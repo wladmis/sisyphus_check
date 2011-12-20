@@ -1,5 +1,5 @@
 Name: sisyphus_check
-Version: 0.8.28
+Version: 0.8.29
 Release: alt1
 
 Summary: package checker for Sisyphus
@@ -32,6 +32,10 @@ cp -a -- sisyphus_check.d %buildroot%_sysconfdir/%name/check.d
 %_bindir/*
 
 %changelog
+* Tue Dec 20 2011 Dmitry V. Levin <ldv@altlinux.org> 0.8.29-alt1
+- 220-check-python: allow packaging of *.py* files in the
+  arch-independent site-packages directory on x86-64 (closes: #26728).
+
 * Thu Dec 15 2011 Vitaly Kuznetsov <vitty@altlinux.ru> 0.8.28-alt1
 - 220-check-python: add exception for python3 source package as well
 
