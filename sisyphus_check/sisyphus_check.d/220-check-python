@@ -1,6 +1,6 @@
 #!/bin/sh -efu
 
-: ${rpm_arch?} ${rpm_name?} ${rpm_filenames?} ${rpm_sourcerpm?}
+: ${rpm_arch?} ${rpm_name?} ${rpm_filenames?} ${rpm_perms_filenames?} ${rpm_sourcerpm?}
 
 check_python()
 {
@@ -35,17 +35,26 @@ check_python()
 		rc=1
 	fi
 
-	local bad_dirs=
+	local bad_dirs= noarch_pattern=
 	case "$rpm_arch" in
 		noarch|i?86|pentium*|athlon*)
-			bad_dirs='^/usr/lib64/python[23][.][0-9]/site-packages/' ;;
+			bad_dirs='/usr/lib64/python[23][.][0-9]/site-packages/' ;;
 		x86_64|amd64)
-			bad_dirs='^/usr/lib/python[23][.][0-9]/site-packages/' ;;
+			noarch_pattern='^d[^ ]+ /usr/lib/python[23][.][0-9]/site-packages/|^-[^ ]+ /usr/lib/python[23][.][0-9]/site-packages/.*\.py([co])?$'
+			bad_dirs='/usr/lib/python[23][.][0-9]/site-packages/' ;;
 	esac
 
-	local bad_files
-	if [ -n "$bad_dirs" ] &&
-	   bad_files=$(printf %s "$rpm_filenames" |egrep "$bad_dirs"); then
+	local bad_files=
+	if [ -n "$bad_dirs" ]; then
+		bad_files="$(printf %s "$rpm_perms_filenames" |
+			     egrep "^[^ ]+ $bad_dirs" ||:)"
+	fi
+	if [ -n "$bad_files" -a -n "$noarch_pattern" ]; then
+		bad_files="$(printf %s "$bad_files" |
+			     egrep -v "$noarch_pattern" ||:)"
+	fi
+	if [ -n "$bad_files" ]; then
+		bad_files="$(printf %s "$bad_files" |cut -d' ' -f2-)"
 		FileError "invalid $rpm_arch python module path: $(oneliner "$bad_files" |fmt -w 128 |head -n1)" "$f"
 		rc=1
 	fi
