@@ -9,14 +9,13 @@ check_browser()
 
 	local f="$1" && shift || return 1
 
-	local srpm_name bad_dirs=
+	local srpm_name bad_dirs
 	srpm_name="${rpm_sourcerpm%-*}"
 	srpm_name="${srpm_name%-*}"
-	if [ "$srpm_name" = 'seamonkey' ]; then
-		bad_dirs='^/usr/lib(64)?/browser-plugins-npapi(/|$)'
-	else
-		bad_dirs='^/usr/lib(64)?/(browser-plugins-npapi|mozilla)(/|$)'
-	fi
+
+	[ "$srpm_name" = 'mozilla-common' ] &&
+		bad_dirs='^/usr/lib(64)?/browser-plugins-npapi(/|$)' ||
+		bad_dirs='^/usr/lib(64)?/(browser-plugins-npapi(/|$)|mozilla$)'
 
 	local bad_files
 	if [ -n "$bad_dirs" ] &&
