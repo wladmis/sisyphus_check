@@ -1,5 +1,5 @@
 Name: sisyphus_check
-Version: 0.8.29
+Version: 0.8.30
 Release: alt1
 
 Summary: package checker for Sisyphus
@@ -32,6 +32,9 @@ cp -a -- sisyphus_check.d %buildroot%_sysconfdir/%name/check.d
 %_bindir/*
 
 %changelog
+* Mon Jan 16 2012 Alexey Gladkov <legion@altlinux.ru> 0.8.30-alt1
+- 240-check-browser: allow /usr/lib*/mozilla/* (closes: #26808).
+
 * Tue Dec 20 2011 Dmitry V. Levin <ldv@altlinux.org> 0.8.29-alt1
 - 220-check-python: allow packaging of *.py* files in the
   arch-independent site-packages directory on x86-64 (closes: #26728).
