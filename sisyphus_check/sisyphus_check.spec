@@ -1,5 +1,5 @@
 Name: sisyphus_check
-Version: 0.8.30
+Version: 0.8.31
 Release: alt1
 
 Summary: package checker for Sisyphus
@@ -32,6 +32,9 @@ cp -a -- sisyphus_check.d %buildroot%_sysconfdir/%name/check.d
 %_bindir/*
 
 %changelog
+* Wed Feb 08 2012 Vitaly Kuznetsov <vitty@altlinux.ru> 0.8.31-alt1
+- 220-check-python: add special python3-module-* packages handling
+
 * Mon Jan 16 2012 Alexey Gladkov <legion@altlinux.ru> 0.8.30-alt1
 - 240-check-browser: allow /usr/lib*/mozilla/* (closes: #26808).
 
