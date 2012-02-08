@@ -30,8 +30,15 @@ check_python()
 
 	if [ -n "${rpm_name##python-module-*}" ] &&
 	   ! printf %s "$rpm_filenames" 2>/dev/null |
-	     egrep -qsv '^/usr/(lib(64)?/python[23][.][0-9]/site-packages|share/doc)/'; then
+	     egrep -qsv '^/usr/(lib(64)?/python2[.][0-9]/site-packages|share/doc)/'; then
 		FileError 'package NAME should start with the "python-module-" prefix' "$f"
+		rc=1
+	fi
+
+	if [ -n "${rpm_name##python3-module-*}" ] &&
+	   ! printf %s "$rpm_filenames" 2>/dev/null |
+	     egrep -qsv '^/usr/(lib(64)?/python3[.][0-9]/site-packages|share/doc)/'; then
+		FileError 'package NAME should start with the "python3-module-" prefix' "$f"
 		rc=1
 	fi
 
