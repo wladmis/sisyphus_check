@@ -7,6 +7,10 @@ check_python()
 	# Check python for binary rpms only.
 	[ "$package_type" = bin ] || return 0
 
+	# Strip arepo prefix from package names.
+	local rpm_name="${rpm_name#i586-}"
+	local rpm_sourcerpm="${rpm_sourcerpm#i586-}"
+
 	# python base packages are exception.
 	if printf %s "$rpm_sourcerpm" |
 	   egrep -qx 'python([2-9](\.[0-9])?)?-[^-]+-[^-]+'; then
