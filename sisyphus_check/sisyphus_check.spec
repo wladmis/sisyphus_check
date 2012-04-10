@@ -1,5 +1,5 @@
 Name: sisyphus_check
-Version: 0.8.32
+Version: 0.8.33
 Release: alt1
 
 Summary: package checker for Sisyphus
@@ -32,6 +32,11 @@ cp -a -- sisyphus_check.d %buildroot%_sysconfdir/%name/check.d
 %_bindir/*
 
 %changelog
+* Tue Apr 10 2012 Dmitry V. Levin <ldv@altlinux.org> 0.8.33-alt1
+- 220-check-python:
+  + reverted the change made in 0.8.32-alt1;
+  + disallowed python3 requirements in python2 modules and vice versa (closes: #27194).
+
 * Thu Apr 05 2012 Dmitry V. Levin <ldv@altlinux.org> 0.8.32-alt1
 - 220-check-python: ignore "i586-" arepo prefix in package names.
 
