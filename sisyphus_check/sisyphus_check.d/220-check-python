@@ -20,7 +20,7 @@ check_python()
 	local f="$1" && shift || return 1
 	local rc=0
 
-	if printf %s "$rpm_filenames" |
+	if printf %s "$rpm_filenames" 2>/dev/null |
 	   egrep '^/usr/lib(64)?/python[23][.][0-9]/' 2>/dev/null |
 	   egrep -vqs '^/usr/lib(64)?/python[23][.][0-9]/(lib-dynload|site-packages|tools)/'; then
 		FileError 'python files inside %python_libdir can be placed only in %python_sitelibdir, %python_tooldir and %python_dynlibdir' "$f"
@@ -32,18 +32,32 @@ check_python()
 		egrep -qs '^/usr/lib(64)?/python[23][.][0-9]/site-packages/' ||
 			return $rc
 
-	if [ -n "${rpm_name##python-module-*}" ] &&
-	   ! printf %s "$rpm_filenames" 2>/dev/null |
-	     egrep -qsv '^/usr/(lib(64)?/python2[.][0-9]/site-packages|share/doc)/'; then
-		FileError 'package NAME should start with the "python-module-" prefix' "$f"
-		rc=1
+	if [ -n "${rpm_name##python-module-*}" ]; then
+		if ! printf %s "$rpm_filenames" 2>/dev/null |
+		   egrep -qsv '^/usr/(lib(64)?/python2[.][0-9]/site-packages|share/doc)/'; then
+			FileError 'package NAME should start with the "python-module-" prefix' "$f"
+			rc=1
+		fi
+	else
+		if printf %s "$rpm_requires" 2>/dev/null | cut -d' ' -f1 |
+		   grep -qs '^/usr/bin/python3'; then
+			FileError 'python2 modules should not have python3 requirements' "$f"
+			rc=1
+		fi
 	fi
 
-	if [ -n "${rpm_name##python3-module-*}" ] &&
-	   ! printf %s "$rpm_filenames" 2>/dev/null |
-	     egrep -qsv '^/usr/(lib(64)?/python3[.][0-9]/site-packages|share/doc)/'; then
-		FileError 'package NAME should start with the "python3-module-" prefix' "$f"
-		rc=1
+	if [ -n "${rpm_name##python3-module-*}" ]; then
+		if ! printf %s "$rpm_filenames" 2>/dev/null |
+		   egrep -qsv '^/usr/(lib(64)?/python3[.][0-9]/site-packages|share/doc)/'; then
+			FileError 'package NAME should start with the "python3-module-" prefix' "$f"
+			rc=1
+		fi
+	else
+		if printf %s "$rpm_requires" 2>/dev/null | cut -d' ' -f1 |
+		   grep -Eqs '^/usr/bin/python($|[^3])'; then
+			FileError 'python3 modules should not have python2 requirements' "$f"
+			rc=1
+		fi
 	fi
 
 	local bad_dirs= noarch_pattern=
