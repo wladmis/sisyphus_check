@@ -1,5 +1,5 @@
 Name: sisyphus_check
-Version: 0.8.33
+Version: 0.8.34
 Release: alt1
 
 Summary: package checker for Sisyphus
@@ -32,6 +32,10 @@ cp -a -- sisyphus_check.d %buildroot%_sysconfdir/%name/check.d
 %_bindir/*
 
 %changelog
+* Fri Apr 13 2012 Dmitry V. Levin <ldv@altlinux.org> 0.8.34-alt1
+- 220-check-python: implemented additional restrictions on
+  requirements between python2 and python3 modules (closes: #27194).
+
 * Tue Apr 10 2012 Dmitry V. Levin <ldv@altlinux.org> 0.8.33-alt1
 - 220-check-python:
   + reverted the change made in 0.8.32-alt1;
