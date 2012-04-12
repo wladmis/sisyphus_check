@@ -36,7 +36,7 @@ check_python()
 		fi
 	else
 		if printf %s "$rpm_requires" 2>/dev/null | cut -d' ' -f1 |
-		   grep -qs '^/usr/bin/python3'; then
+		   grep -Eqs '^(/usr/bin/)?python3'; then
 			FileError 'python2 modules should not have python3 requirements' "$f"
 			rc=1
 		fi
@@ -50,7 +50,7 @@ check_python()
 		fi
 	else
 		if printf %s "$rpm_requires" 2>/dev/null | cut -d' ' -f1 |
-		   grep -Eqs '^/usr/bin/python($|[^3])'; then
+		   grep -Eqs '^(/usr/bin/)?python($|[^3])'; then
 			FileError 'python3 modules should not have python2 requirements' "$f"
 			rc=1
 		fi
