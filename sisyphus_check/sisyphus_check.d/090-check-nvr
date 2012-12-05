@@ -11,6 +11,11 @@ check_nvr()
 	local f="$1" && shift || return 1
 	local rc=0
 
+	if ! printf %s "$rpm_name" |grep -Exqs '[A-Za-z0-9][A-Za-z0-9._+-]*[A-Za-z0-9+]'; then
+		FileError "invalid package NAME: $rpm_name" "$f"
+		rc=1
+	fi
+
 	if printf %s "$rpm_version" |grep -qs '[%<=>]'; then
 		FileError "invalid package VERSION: $rpm_version" "$f"
 		rc=1
@@ -21,7 +26,7 @@ check_nvr()
 		rc=1
 	fi
 
-	if ! printf %s "$rpm_release" |egrep -qs '^alt([1-9]|0.)'; then
+	if ! printf %s "$rpm_release" |grep -Eqs '^alt([1-9]|0.)'; then
 		FileError "invalid package RELEASE: $rpm_release" "$f"
 		rc=1
 	fi
