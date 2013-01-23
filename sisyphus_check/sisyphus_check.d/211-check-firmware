@@ -9,20 +9,37 @@ check_firmware()
 	# Check firmware for binary rpms only.
 	[ "$package_type" = bin ] || return 0
 
-	# udev and kernel-image-* packages are exception.
-	if [ "$rpm_name" = 'udev' -o \
-	     -z "${rpm_name##kernel-image-*}" ]; then
-		return 0
-	fi
-
 	local f="$1" && shift || return 1
-	local rc=0 firmware_name=0 firmware_files=0
+	local rc=0 firmware_name firmware_files
 
-	[ -n "${rpm_name##firmware-*}" ] ||
-		firmware_name=1
+	case "$rpm_name" in
+		udev|kernel-image-*)
+			# these packages are allowed (but not required) to package
+			# objects inside /lib/firmware/
+			return 0
+			;;
+		firmware-tools|firmware-tools-*)
+			# these packages are not allowed to package objects
+			# inside /lib/firmware/
+			firmware_name=0
+			;;
+		firmware-*)
+			# these packages are required to package objects
+			# inside /lib/firmware/
+			firmware_name=1
+			;;
+		*)
+			# these packages are not allowed to package objects
+			# inside /lib/firmware/
+			firmware_name=0
+			;;
+	esac
 
-	! printf %s "$rpm_filenames" 2>/dev/null |grep -qs '^/lib/firmware/' ||
+	if printf %s "$rpm_filenames" 2>/dev/null |grep -qs '^/lib/firmware/'; then
 		firmware_files=1
+	else
+		firmware_files=0
+	fi
 
 	case "$firmware_name,$firmware_files" in
 		0,1)	FileError "package NAME should start with the 'firmware-': $rpm_name" "$f"
