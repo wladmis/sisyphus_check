@@ -62,8 +62,15 @@ check_deps()
 		rc=1
 	fi
 
-	[ -n "${rpm_name##kernel-*}" ] ||
+	# allow kernel deps in kernel-* packages
+	if [ -z "${rpm_name##kernel-*}" ]; then
 		return $rc
+	fi
+
+	# allow kernel deps in packages built from kernel-image-*
+	if [ -n "$rpm_sourcerpm" -a -z "${rpm_sourcerpm##kernel-image-*}" ]; then
+		return $rc
+	fi
 
 	if bad=$(printf %s "$rpm_deps" |cut -d' ' -f1 |egrep '^kernel-(image|modules)'); then
 		FileError "forbidden dependencies: $(oneliner "$bad")" "$f"
