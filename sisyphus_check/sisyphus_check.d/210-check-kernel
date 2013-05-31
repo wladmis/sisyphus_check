@@ -21,8 +21,8 @@ kernel_version_code() {
 }
 
 check_builtin_kmodule() {
-	if [ "$rpm_version" != "$kernel_version" ]; then
-		FileError "kernel module VERSION ($rpm_version) and kernel image version ($kernel_version) should be identical" "$f"
+	if [ "$rpm_version" != "$kernel_version" -a "${rpm_version#*_}" != "$kernel_version" ]; then
+		FileError "kernel module VERSION ($rpm_version) should contain kernel image version ($kernel_version)" "$f"
 		return 1
 	fi
 
