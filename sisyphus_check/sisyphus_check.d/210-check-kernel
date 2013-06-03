@@ -15,7 +15,7 @@ kernel_version_code() {
 	patchlevel="$(printf %s "$kver" | cut -d. -f2)"
 	sublevel="$(printf %s "$kver"   | cut -d. -f3)"
 	suffix="$(printf %s "$kver"     | cut -d. -f4)"
-	[ -z "$suffix" ] || suffix=".$suffix"
+	[ -z "$suffix" ] || suffix=".e$suffix"
 
 	printf '%s' "$(($version * 65536 + $patchlevel * 256 + $sublevel))$suffix"
 }
