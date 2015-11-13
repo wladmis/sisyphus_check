@@ -11,7 +11,7 @@ check_nvr()
 	local f="$1" && shift || return 1
 	local rc=0
 
-	if ! printf %s "$rpm_name" |grep -Exqs '[A-Za-z0-9][A-Za-z0-9._+-]*[A-Za-z0-9+]'; then
+	if ! printf %s "$rpm_name" |grep -Exqs '[A-Za-z0-9]([A-Za-z0-9._+-]*[A-Za-z0-9+])?'; then
 		FileError "invalid package NAME: $rpm_name" "$f"
 		rc=1
 	fi
