@@ -18,8 +18,8 @@ check_python()
 
 	if printf %s "$rpm_filenames" 2>/dev/null |
 	   egrep '^/usr/lib(64)?/python[23][.][0-9]/' 2>/dev/null |
-	   egrep -vqs '^/usr/lib(64)?/python[23][.][0-9]/(lib-dynload|site-packages|tools)/'; then
-		FileError 'python files inside %python_libdir can be placed only in %python_sitelibdir, %python_tooldir and %python_dynlibdir' "$f"
+	   egrep -vqs '^/usr/lib(64)?/python[23][.][0-9]/site-packages/'; then
+		FileError 'python files inside %python_libdir can be placed only in %python_sitelibdir' "$f"
 		rc=1
 	fi
 
