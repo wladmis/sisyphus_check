@@ -28,6 +28,12 @@ check_python()
 		egrep -qs '^/usr/lib(64)?/python[23]([.][0-9])?/site-packages/' ||
 			return $rc
 
+	if printf %s "$rpm_filenames" 2>/dev/null |
+	   egrep -qs '^/usr/lib(64)?/python3[.][0-9]/site-packages/'; then
+		FileError 'a common %python_sitelibdir must be used for python3 (i.e., minor version is not allowed)' "$f"
+		rc=1
+	fi
+
 	if [ -n "${rpm_name##python-module-*}" ]; then
 		if ! printf %s "$rpm_filenames" 2>/dev/null |
 		   egrep -qsv '^/usr/(lib(64)?/python2([.][0-9])?/site-packages|share/doc)/'; then
