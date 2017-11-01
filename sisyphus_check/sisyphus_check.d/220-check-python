@@ -74,11 +74,11 @@ check_python()
 	local bad_files=
 	if [ -n "$bad_dirs" ]; then
 		bad_files="$(printf %s "$rpm_perms_filenames" |
-			     egrep "^[^ ]+ $bad_dirs" ||:)"
+			     egrep "^[^ ]+ $bad_dirs" || [ $? -eq 1 ])"
 	fi
 	if [ -n "$bad_files" -a -n "$noarch_pattern" ]; then
 		bad_files="$(printf %s "$bad_files" |
-			     egrep -v "$noarch_pattern" ||:)"
+			     egrep -v "$noarch_pattern" || [ $? -eq 1 ])"
 	fi
 	if [ -n "$bad_files" ]; then
 		bad_files="$(printf %s "$bad_files" |cut -d' ' -f2-)"
@@ -88,7 +88,7 @@ check_python()
 
 	local unknown_version_files='^/usr/lib(64)?/python[23]([.][0-9])?/site-packages/[^/]*unknown-py[23][.][0-9](\.egg-info|-nspkg\.pth$)'
 	local bad_version_files
-	bad_version_files="$(printf %s "$rpm_filenames" | egrep "$unknown_version_files" ||:)"
+	bad_version_files="$(printf %s "$rpm_filenames" | egrep "$unknown_version_files" || [ $? -eq 1 ])"
 
 	if [ -n "$bad_version_files" ]; then
 		FileError "python module contains invalid version file(s): $(oneliner "$bad_version_files" | fmt -w 128 | head -n1)" "$f"
