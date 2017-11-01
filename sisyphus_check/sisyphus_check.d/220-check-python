@@ -86,6 +86,15 @@ check_python()
 		rc=1
 	fi
 
+	local unknown_version_files='^/usr/lib(64)?/python[23]([.][0-9])?/site-packages/[^/]*unknown-py[23][.][0-9](\.egg-info|-nspkg\.pth$)'
+	local bad_version_files
+	bad_version_files="$(printf %s "$rpm_filenames" | egrep "$unknown_version_files" ||:)"
+
+	if [ -n "$bad_version_files" ]; then
+		FileError "python module contains invalid version file(s): $(oneliner "$bad_version_files" | fmt -w 128 | head -n1)" "$f"
+		rc=1
+	fi
+
 	return $rc
 }
 
