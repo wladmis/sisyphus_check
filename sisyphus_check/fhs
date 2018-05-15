@@ -22,5 +22,5 @@ rootfiles		^/root($|/)
 sysvinit		^/dev/initctl$
 udev			^/dev($|/)
 webserver-common	^/var/www($|/)
-lcc[0-9]*		^/opt/mcst[^/]*($|/)
-e2k32-lcc[0-9]*		^/opt/mcst[^/]*($|/)
+lcc[0-9]*		^/opt/mcst($|/)
+e2k32-lcc[0-9]*		^/opt/mcst($|/)
