@@ -4,6 +4,7 @@ fhs_config='/etc/sisyphus_check/fhs'
 
 rpm_name="${rpm_name?RPM name required}"
 rpm_filenames="${rpm_filenames?RPM file list required}"
+rpm_arch="${rpm_arch?RPM arch required}"
 
 fhs_exceptions()
 {
@@ -26,7 +27,40 @@ check_fhs()
 	[ "$rpm_name" != filesystem ] || return 0
 
 	local rc=0
-	local fhs_re='^/(bin|boot|etc|lib(64)?|sbin|usr/(bin|etc|games|include|lib(exec|64)?|sbin|share|src)|var/(cache|games|lib|lock|log|run|spool|www|yp))/.*'
+	# libdir
+	#
+	# The same processor can run ELFs with different well-known ABIs.
+	# The rpm_arch specifies the "default" ABI of the target system
+	# (and hence the processor arch). We allow such a package to
+	# include ELFs runnable on this processor with a "non-default" ABI.
+	# ELFs compatible with a processor (say, x86_64), but with
+	# different ABIs (32bit, 64bit, or x32) are put into different
+	# dirs (lib, lib64, libx32), so that there is no collision between
+	# potentially runnable ELFs.
+	#
+	# The regexp below is intended to allow exactly these dirs
+	# for each processor arch determined by rpm_arch.
+	#
+	# (Note that we don't care about collisions between ELFs that can
+	# never be run natively on the same processor, e.g., x86_64 and
+	# aarch64 ELFs; the used paths are simple and don't distinguish
+	# processor archs: lib, lib64. This approach is different to what
+	# is done in Debian and for riscv by default.)
+	local libsuffix_re=''
+	case "$rpm_arch" in
+		*64*|x32|e2k*|s390x) libsuffix_re="$libsuffix_re|64"
+						;;
+	esac
+	case "$rpm_arch" in
+		x32|x86_64) libsuffix_re="$libsuffix_re|x32"
+						;;
+	esac
+	# An MCST tradition:
+	case "$rpm_arch" in
+		e2k*) libsuffix_re="$libsuffix_re|32"
+						;;
+	esac
+	local fhs_re="^/(bin|boot|etc|lib($libsuffix_re)|sbin|usr/(bin|etc|games|include|lib(exec|$libsuffix_re)|sbin|share|src)|var/(cache|games|lib|lock|log|run|spool|www|yp))/.*"
 	local bogus_re='^/var/lib/(cache|lib|lock|log|nis|run|spool|www|yp)/.*'
 	local filenames bad_filenames except_re
 
